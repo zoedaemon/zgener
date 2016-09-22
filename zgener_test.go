@@ -61,7 +61,7 @@ func TestNewSimpleForm(t *testing.T) {
 	}
 }
 
-func TestLoadFormJSON(t *testing.T) {
+func TestManualLoadFormJSONSimple(t *testing.T) {
 
 	fmt.Println(SharedFormatDetail, "Set Simple Form Data From JSON ")
 
@@ -93,7 +93,66 @@ func TestLoadFormJSON(t *testing.T) {
 	t.Logf("---- Data Pointer 1: -- %p -- %p", f1, f2)
 	t.Logf("---- Data Pointer 2: -- %p -- %p", f1.Pointer(), f2.Pointer())
 	//checks content
-	if strings.Compare(WebGenerator.Forms["TestForm"].FormName, NewForm.FormName) != 0 {
+	if strings.Compare(WebGenerator.Forms["TestForm"].FormName,
+		"data-wisata-from-json") != 0 {
 		t.Error("Map Data Differ : ", WebGenerator.Forms["TestForm"].FormName)
+	}
+}
+
+func TestManualLoadFormJSONComplex(t *testing.T) {
+
+	fmt.Println(SharedFormatDetail, "Set Complex Form Data From JSON ")
+
+	WebGenerator := New()
+	if WebGenerator == nil {
+		t.Errorf("Failed to CREATE new obj !!!")
+	}
+
+	var NewForm *zGenForm
+
+	content, err := ioutil.ReadFile("./test/TestLoadFormJSON.json")
+	if err != nil {
+		fmt.Print("Error:", err)
+	}
+
+	err = json.Unmarshal(content, &NewForm)
+	if err != nil {
+		fmt.Print("Error:", err)
+	}
+
+	WebGenerator.Forms["TestForm"] = NewForm
+
+	f1 := reflect.ValueOf(WebGenerator.Forms["TestForm"]) // Take the address of F1_ID
+	f2 := reflect.ValueOf(NewForm)                        // Take the address of F2_ID
+	//checks pointer
+	if f1 != f2 {
+		t.Error("Map Pointer Differ : ", WebGenerator.Forms["TestForm"].FormName)
+	}
+	t.Logf("---- Data Pointer 1: -- %p -- %p", f1, f2)
+
+	if strings.Compare(WebGenerator.Forms["TestForm"].FormName,
+		NewForm.FormName) != 0 {
+		t.Error("Map FormName Differ : ", WebGenerator.Forms["TestForm"].FormName)
+	}
+
+	//strings.Compare(WebGenerator.Forms["TestForm"].RawFields["name"]
+	if strings.Compare(WebGenerator.Forms["TestForm"].Fields["name"].Type,
+		"FORM_STRING") != 0 {
+		t.Error("FormName.Fields Not FORM_STRING : ",
+			WebGenerator.Forms["TestForm"].Fields["id"].Caption)
+	}
+
+	for _, val := range WebGenerator.Forms["TestForm"].Fields {
+		if len(val.Type) > 0 {
+			t.Logf("---- Forms[TestForm].Fields[name].Type : %s", val.Type)
+		}
+		if val.Length > 0 {
+			t.Logf("---- Forms[TestForm].Fields[name].Length : %d", val.Length)
+		}
+		if len(val.Caption) > 0 {
+			t.Logf("---- Forms[TestForm].Fields[name].Caption : %s", val.Caption)
+		}
+		t.Log("-----------")
+
 	}
 }

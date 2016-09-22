@@ -8,6 +8,14 @@ const (
 	RELATIVE_PATH bool = true
 )
 
+const (
+	FORM_BOOL   = iota
+	FORM_INT    = iota
+	FORM_STRING = iota
+	FORM_HIDDEN = iota
+	FORM_SELECT = iota
+)
+
 var (
 	Debug bool = false
 )
@@ -26,15 +34,19 @@ type zGener struct {
 }
 
 type zGenForm struct {
-	FormName string `json:"form-name"`
-	Fields   zGenField
-	Actions  zGenAction
-	Buttons  zGenButton
+	FormName  string `json:"form-name"`
+	RawFields map[string]interface{}
+	Fields    map[string]zGenField `json:"form-fields"`
+
+	Actions zGenAction
+	Buttons zGenButton
 }
 
 type (
 	zGenField struct {
-
+		Type    string `json:"type"`
+		Length  uint   `json:"length"`
+		Caption string `json:"caption"`
 		/*
 			FUTURE
 		*/

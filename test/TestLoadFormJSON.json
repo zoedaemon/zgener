@@ -1,3 +1,20 @@
 {
-	"form-name"	: "data-wisata-from-json"
+	"form-name"	: "data-wisata-from-json",
+	"form-fields": {
+		"id" : {
+			"type" : "FORM_HIDDEN"
+		},
+		"name" : {
+			"type" : "FORM_STRING",
+			"length" : 100,
+			"caption" : "Name"
+		},
+		"province" : {
+			"type" : "FORM_TEXT",
+			"caption" : "Provinsi"
+		},
+		"village" : {
+			"caption" : "Village"
+		}
+	}
 }
