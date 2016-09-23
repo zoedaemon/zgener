@@ -6,15 +6,17 @@ package zgener
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"html/template"
 	"io"
 	"io/ioutil"
-	//	"os"
+	"os"
 )
 
 const (
-	RELATIVE_PATH         bool = true  //not yet used
-	TEST_SHOW_OUTPUT_DATA bool = false //no data to print while test process
+	RELATIVE_PATH         bool = true //not yet used
+	TEST_SHOW_OUTPUT_DATA bool = true //no data to print while test process
 )
 
 const (
@@ -38,8 +40,9 @@ var (
 /*zgof's fields */
 type zGener struct {
 	/*key is file name*/
-	RawForms map[string]string
-	Forms    map[string]*zGenForm
+	RawForms  map[string]string
+	Forms     map[string]*zGenForm
+	Templates map[string]*template.Template
 
 	/*
 		FUTURE
@@ -85,6 +88,7 @@ type (
 func New() *zGener {
 	Obj := new(zGener)
 	Obj.Forms = make(map[string]*zGenForm)
+	Obj.Templates = make(map[string]*template.Template)
 	return Obj
 }
 
@@ -138,4 +142,37 @@ func (zgeobj *zGener) printFormToFile(form_name string, print_func LogPrintFormT
 		}
 		print_func(f, "-----------\n")
 	}
+}
+
+func (zgeobj *zGener) loadTemplate(form_name string, file string) error {
+
+	if _, err := os.Stat(file); err != nil {
+		if os.IsNotExist(err) {
+			return errors.New("file not exist")
+		} else {
+			return errors.New("error opening file : " + err.Error())
+		}
+	}
+
+	//load template data
+	dat, err := ioutil.ReadFile(file)
+	//cek error
+	if err != nil {
+		panic(err)
+	}
+
+	tmpl := template.New(form_name) //.Delims("{**", "**}")
+	zgeobj.Templates[form_name], err = tmpl.Parse(string(dat))
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(string(dat))
+	return nil
+}
+
+func (zgeobj *zGener) Render(w io.Writer, form_name string, data interface{}) error {
+	//ExecuteTemplate(w, name, data)
+	zgeobj.Templates[form_name].Execute(w, data)
+	return nil
 }

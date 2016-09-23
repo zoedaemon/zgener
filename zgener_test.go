@@ -3,11 +3,16 @@ package zgener
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/labstack/echo"
+	Engine "github.com/labstack/echo/engine/standard"
 )
 
 var SharedFormatDetail string = "=== DETAIL  "
@@ -197,4 +202,53 @@ func TestAutoLoadFormJSON(t *testing.T) {
 		WebGenerator.printForm("TestForm", t.Logf)
 		WebGenerator.printFormToFile("TestForm", fmt.Fprintf, os.Stdout)
 	}
+}
+
+///////////////
+
+type Template struct {
+	ZGOBJ *zGener
+}
+
+func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.ZGOBJ.Render(w, name, "World")
+}
+
+func TestRenderFormJSON(t *testing.T) {
+
+	fmt.Println(SharedFormatDetail, "Load Template Data and Render it !!!")
+
+	WebGenerator := New()
+	if WebGenerator == nil {
+		t.Errorf("Failed to CREATE new obj !!!")
+	}
+
+	WebGenerator.loadForm("TestForm", "./test/TestLoadFormJSON.json")
+
+	//TODO : Need error handler for next commit
+	/*	err := WebGenerator.loadForm("TestForm", "./test/TestLoadFormJSON.json")
+		if err != nil {
+			t.Errorf(err)
+		}
+	*/
+
+	//Parse json template with no error ???
+	//	err := WebGenerator.loadTemplate("TestForm", "./test/TestLoadFormJSON.json")
+	err := WebGenerator.loadTemplate("TestForm", "./test_template/page_view.html")
+	if err != nil {
+		t.Error(err)
+	}
+
+	WebGenerator.Render(os.Stdout, "TestForm", "World")
+
+	e := echo.New()
+	temp := &Template{WebGenerator}
+	e.SetRenderer(temp)
+	// Route => handler
+	e.GET("/", func(c echo.Context) error {
+		return c.Render(http.StatusOK, "TestForm", "World")
+	})
+	// Start server
+	e.Run(Engine.New(":80"))
+
 }
