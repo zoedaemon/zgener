@@ -13,7 +13,8 @@ import (
 )
 
 const (
-	RELATIVE_PATH bool = true
+	RELATIVE_PATH         bool = true  //not yet used
+	TEST_SHOW_OUTPUT_DATA bool = false //no data to print while test process
 )
 
 const (

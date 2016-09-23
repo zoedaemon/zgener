@@ -20,8 +20,10 @@ func TestNewObj(t *testing.T) {
 	if WebGenerator == nil {
 		t.Errorf("Failed to CREATE new obj !!!")
 	}
-	t.Logf("---- OBJ CREATED : -- %#v -- %v", WebGenerator, WebGenerator)
 
+	if TEST_SHOW_OUTPUT_DATA {
+		t.Logf("---- OBJ CREATED : -- %#v -- %v", WebGenerator, WebGenerator)
+	}
 }
 
 func TestNewSimpleForm(t *testing.T) {
@@ -54,8 +56,12 @@ func TestNewSimpleForm(t *testing.T) {
 	if f1.Pointer() != f2.Pointer() {
 		t.Error("Map Pointer Differ : ", WebGenerator.Forms["TestForm"].FormName)
 	}
-	t.Logf("---- Data Pointer 1: -- %p -- %p", f1, f2)
-	t.Logf("---- Data Pointer 2: -- %p -- %p", f1.Pointer(), f2.Pointer())
+
+	if TEST_SHOW_OUTPUT_DATA {
+		t.Logf("---- Data Pointer 1: -- %p -- %p", f1, f2)
+		t.Logf("---- Data Pointer 2: -- %p -- %p", f1.Pointer(), f2.Pointer())
+	}
+
 	//checks content
 	if strings.Compare(WebGenerator.Forms["TestForm"].FormName, NewForm.FormName) != 0 {
 		t.Error("Map Data Differ : ", WebGenerator.Forms["TestForm"].FormName)
@@ -81,7 +87,10 @@ func TestManualLoadFormJSONSimple(t *testing.T) {
 	if err != nil {
 		fmt.Print("Error:", err)
 	}
-	t.Logf("---- NewForm : %s", NewForm.FormName)
+
+	if TEST_SHOW_OUTPUT_DATA {
+		t.Logf("---- NewForm : %s", NewForm.FormName)
+	}
 
 	WebGenerator.Forms["TestForm"] = NewForm
 
@@ -91,8 +100,12 @@ func TestManualLoadFormJSONSimple(t *testing.T) {
 	if f1.Pointer() != f2.Pointer() {
 		t.Error("Map Pointer Differ : ", WebGenerator.Forms["TestForm"].FormName)
 	}
-	t.Logf("---- Data Pointer 1: -- %p -- %p", f1, f2)
-	t.Logf("---- Data Pointer 2: -- %p -- %p", f1.Pointer(), f2.Pointer())
+
+	if TEST_SHOW_OUTPUT_DATA {
+		t.Logf("---- Data Pointer 1: -- %p -- %p", f1, f2)
+		t.Logf("---- Data Pointer 2: -- %p -- %p", f1.Pointer(), f2.Pointer())
+	}
+
 	//checks content
 	if strings.Compare(WebGenerator.Forms["TestForm"].FormName,
 		"data-wisata-from-json") != 0 {
@@ -129,7 +142,10 @@ func TestManualLoadFormJSONComplex(t *testing.T) {
 	if f1 != f2 {
 		t.Error("Map Pointer Differ : ", WebGenerator.Forms["TestForm"].FormName)
 	}
-	t.Logf("---- Data Pointer 1: -- %p -- %p", f1, f2)
+
+	if TEST_SHOW_OUTPUT_DATA {
+		t.Logf("---- Data Pointer 1: -- %p -- %p", f1, f2)
+	}
 
 	if strings.Compare(WebGenerator.Forms["TestForm"].FormName,
 		NewForm.FormName) != 0 {
@@ -143,17 +159,19 @@ func TestManualLoadFormJSONComplex(t *testing.T) {
 			WebGenerator.Forms["TestForm"].Fields["id"].Caption)
 	}
 
-	for _, val := range WebGenerator.Forms["TestForm"].Fields {
-		if len(val.Type) > 0 {
-			t.Logf("---- Forms[TestForm].Fields[name].Type : %s", val.Type)
+	if TEST_SHOW_OUTPUT_DATA {
+		for _, val := range WebGenerator.Forms["TestForm"].Fields {
+			if len(val.Type) > 0 {
+				t.Logf("---- Forms[TestForm].Fields[name].Type : %s", val.Type)
+			}
+			if val.Length > 0 {
+				t.Logf("---- Forms[TestForm].Fields[name].Length : %d", val.Length)
+			}
+			if len(val.Caption) > 0 {
+				t.Logf("---- Forms[TestForm].Fields[name].Caption : %s", val.Caption)
+			}
+			t.Log("-----------")
 		}
-		if val.Length > 0 {
-			t.Logf("---- Forms[TestForm].Fields[name].Length : %d", val.Length)
-		}
-		if len(val.Caption) > 0 {
-			t.Logf("---- Forms[TestForm].Fields[name].Caption : %s", val.Caption)
-		}
-		t.Log("-----------")
 	}
 }
 
@@ -175,6 +193,8 @@ func TestAutoLoadFormJSON(t *testing.T) {
 			WebGenerator.Forms["TestForm"].Fields["id"].Caption)
 	}
 	//coba tampilkan outputnya
-	WebGenerator.printForm("TestForm", t.Logf)
-	WebGenerator.printFormToFile("TestForm", fmt.Fprintf, os.Stdout)
+	if TEST_SHOW_OUTPUT_DATA {
+		WebGenerator.printForm("TestForm", t.Logf)
+		WebGenerator.printFormToFile("TestForm", fmt.Fprintf, os.Stdout)
+	}
 }
