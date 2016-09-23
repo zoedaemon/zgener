@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"reflect"
 	"strings"
 	"testing"
@@ -153,6 +154,27 @@ func TestManualLoadFormJSONComplex(t *testing.T) {
 			t.Logf("---- Forms[TestForm].Fields[name].Caption : %s", val.Caption)
 		}
 		t.Log("-----------")
-
 	}
+}
+
+func TestAutoLoadFormJSON(t *testing.T) {
+
+	fmt.Println(SharedFormatDetail, "Load Form Data From JSON File With zGener's Function")
+
+	WebGenerator := New()
+	if WebGenerator == nil {
+		t.Errorf("Failed to CREATE new obj !!!")
+	}
+
+	WebGenerator.loadForm("TestForm", "./test/TestLoadFormJSON.json")
+
+	//strings.Compare(WebGenerator.Forms["TestForm"].RawFields["name"]
+	if strings.Compare(WebGenerator.getForm("TestForm").Fields["name"].Type,
+		"FORM_STRING") != 0 {
+		t.Error("FormName.Fields Not FORM_STRING : ",
+			WebGenerator.Forms["TestForm"].Fields["id"].Caption)
+	}
+	//coba tampilkan outputnya
+	WebGenerator.printForm("TestForm", t.Logf)
+	WebGenerator.printFormToFile("TestForm", fmt.Fprintf, os.Stdout)
 }
