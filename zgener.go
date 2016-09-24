@@ -93,22 +93,23 @@ func New() *zGener {
 	return Obj
 }
 
-func (zgeobj *zGener) LoadForm(form_name string, file string) {
+func (zgeobj *zGener) LoadForm(form_name string, file string) error {
 
 	//object form that hold data from json file
 	var NewForm *zGenForm
 
 	content, err := ioutil.ReadFile(file)
 	if err != nil {
-		fmt.Print("Error:", err)
+		return errors.New("error opening file : " + err.Error())
 	}
 
 	err = json.Unmarshal(content, &NewForm)
 	if err != nil {
-		fmt.Print("Error:", err)
+		return errors.New("error unmarshall json file : " + err.Error())
 	}
 
 	zgeobj.Forms[form_name] = NewForm
+	return nil
 }
 
 func (zgeobj *zGener) GetForm(form_name string) *zGenForm {
@@ -159,13 +160,13 @@ func (zgeobj *zGener) LoadTemplate(form_name string, file string) error {
 	dat, err := ioutil.ReadFile(file)
 	//cek error
 	if err != nil {
-		panic(err)
+		return errors.New("error opening file : " + err.Error())
 	}
 
 	tmpl := template.New(form_name) //.Delims("{**", "**}")
 	zgeobj.Templates[form_name], err = tmpl.Parse(string(dat))
 	if err != nil {
-		return err
+		return errors.New("error parse template : " + err.Error())
 	}
 
 	fmt.Println(string(dat))

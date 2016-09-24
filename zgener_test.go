@@ -17,6 +17,7 @@ import (
 
 const (
 	TEMPLATE_FILE string = "./test_template/page_view.html"
+	JSON_FILE     string = "./test/TestLoadFormJSON.json"
 )
 
 var SharedFormatDetail string = "=== DETAIL  "
@@ -88,7 +89,7 @@ func TestManualLoadFormJSONSimple(t *testing.T) {
 
 	var NewForm *zGenForm
 
-	content, err := ioutil.ReadFile("./test/TestLoadFormJSON.json")
+	content, err := ioutil.ReadFile(JSON_FILE)
 	if err != nil {
 		fmt.Print("Error:", err)
 	}
@@ -133,7 +134,7 @@ func TestManualLoadFormJSONComplex(t *testing.T) {
 
 	var NewForm *zGenForm
 
-	content, err := ioutil.ReadFile("./test/TestLoadFormJSON.json")
+	content, err := ioutil.ReadFile(JSON_FILE)
 	if err != nil {
 		fmt.Print("Error:", err)
 	}
@@ -193,7 +194,7 @@ func TestAutoLoadFormJSON(t *testing.T) {
 		t.Errorf("Failed to CREATE new obj !!!")
 	}
 
-	WebGenerator.LoadForm("TestForm", "./test/TestLoadFormJSON.json")
+	WebGenerator.LoadForm("TestForm", JSON_FILE)
 
 	//strings.Compare(WebGenerator.Forms["TestForm"].RawFields["name"]
 	if strings.Compare(WebGenerator.GetForm("TestForm").Fields["name"].Type,
@@ -208,16 +209,6 @@ func TestAutoLoadFormJSON(t *testing.T) {
 	}
 }
 
-///////////////
-/*
-type Template struct {
-	ZGOBJ *zGener
-}
-
-func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	return t.ZGOBJ.render(w, name, "World")
-}*/
-
 func TestRenderFormJSON(t *testing.T) {
 
 	fmt.Println(SharedFormatDetail, "Load Template Data and Render it !!!")
@@ -227,22 +218,19 @@ func TestRenderFormJSON(t *testing.T) {
 		t.Errorf("Failed to CREATE new obj !!!")
 	}
 
-	WebGenerator.LoadForm("TestForm", "./test/TestLoadFormJSON.json")
-
-	//TODO : Need error handler for next commit
-	/*	err := WebGenerator.loadForm("TestForm", "./test/TestLoadFormJSON.json")
-		if err != nil {
-			t.Errorf(err)
-		}
-	*/
-
-	//Parse json template with no error ???
-	//	err := WebGenerator.loadTemplate("TestForm", "./test/TestLoadFormJSON.json")
-	err := WebGenerator.LoadTemplate("TestForm", TEMPLATE_FILE)
+	//DONE : Need error handler for next commit
+	err := WebGenerator.LoadForm("TestForm", JSON_FILE)
 	if err != nil {
 		t.Error(err)
 	}
 
+	//load template file
+	err = WebGenerator.LoadTemplate("TestForm", TEMPLATE_FILE)
+	if err != nil {
+		t.Error(err)
+	}
+
+	//render to stdout
 	WebGenerator.Render(os.Stdout, "TestForm", "World")
 
 	//use this to render to string, but call buffer.String() after this
@@ -265,15 +253,5 @@ func TestRenderFormJSON(t *testing.T) {
 	if strings.Compare(rendered, string_data) != 0 {
 		t.Error("Unexpected Rendered Result : ", rendered)
 	}
-	/*
-		e := echo.New()
-		temp := &Template{WebGenerator}
-		e.SetRenderer(temp)
-		// Route => handler
-		e.GET("/", func(c echo.Context) error {
-			return c.Render(http.StatusOK, "TestForm", "World")
-		})
-		// Start server
-		e.Run(Engine.New(":80"))
-	*/
+
 }
