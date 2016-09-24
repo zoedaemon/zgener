@@ -145,6 +145,11 @@ func (zgeobj *zGener) PrintFormToFile(form_name string, print_func LogPrintFormT
 	}
 }
 
+func defaultPrint(s string) string {
+
+	return ("This From Default Print " + s)
+}
+
 func (zgeobj *zGener) LoadTemplate(form_name string, file string) error {
 
 	if _, err := os.Stat(file); err != nil {
@@ -163,6 +168,8 @@ func (zgeobj *zGener) LoadTemplate(form_name string, file string) error {
 	}
 
 	tmpl := template.New(form_name) //.Delims("{**", "**}")
+	tmpl.Funcs(template.FuncMap{"default_print": defaultPrint})
+
 	zgeobj.Templates[form_name], err = tmpl.Parse(string(dat))
 	if err != nil {
 		return errors.New("error parse template : " + err.Error())

@@ -11,13 +11,13 @@ import (
 	"strings"
 	"testing"
 
-	//	"github.com/labstack/echo"
-	//	Engine "github.com/labstack/echo/engine/standard"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
-	TEMPLATE_FILE string = "./test_template/page_view.html"
-	JSON_FILE     string = "./test/TestLoadFormJSON.json"
+	TEMPLATE_FILE_WITH_FUNCTION string = "./test_template/page_view_with_function.html"
+	TEMPLATE_FILE               string = "./test_template/page_view.html"
+	JSON_FILE                   string = "./test/TestLoadFormJSON.json"
 )
 
 var SharedFormatDetail string = "=== DETAIL  "
@@ -251,6 +251,73 @@ func TestRenderFormJSON(t *testing.T) {
 	string_data = strings.Replace(string_data, "{{.}}", "World", -1)
 
 	if strings.Compare(rendered, string_data) != 0 {
+		t.Error("Unexpected Rendered Result : ", rendered)
+	}
+
+}
+
+////////////call user defined func not so so complex :D
+
+//this object pass to template
+type Hello struct {
+}
+
+//function to call
+func (self Hello) Print(s string) string {
+	return "Hello " + s
+}
+
+//do test
+func TestRenderFormWithFunction(t *testing.T) {
+
+	fmt.Println(SharedFormatDetail, `Load Template Data and Render it, 
+	and user defined function too !!!`)
+
+	WebGenerator := New()
+	if WebGenerator == nil {
+		t.Errorf("Failed to CREATE new obj !!!")
+	}
+
+	//DONE : Need error handler for next commit
+	err := WebGenerator.LoadForm("TestForm", JSON_FILE)
+	if err != nil {
+		t.Error(err)
+	}
+
+	//load template file
+	err = WebGenerator.LoadTemplate("TestForm", TEMPLATE_FILE_WITH_FUNCTION)
+	if err != nil {
+		t.Error(err)
+	}
+
+	//create object
+	TestObj := Hello{}
+
+	//render to stdout
+	WebGenerator.Render(os.Stdout, "TestForm", TestObj)
+
+	//use this to render to string, but call buffer.String() after this
+	buffer, err := WebGenerator.RenderToBuffer("TestForm", TestObj)
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	//must be converted to string
+	rendered := buffer.String()
+
+	//NOTE :cannot testing strings.Compare(rendered,`<!DOCTYPE html>...
+	//		so we direct open template file and replace {{.}} to expected value
+	data, err := ioutil.ReadFile(TEMPLATE_FILE_WITH_FUNCTION)
+	string_data := string(data)
+	//replace template manually for string comparison
+	string_data = strings.Replace(string_data, "{{ .Print \"zoed :P\"}}",
+		"Hello zoed :P", -1)
+	string_data = strings.Replace(string_data, "{{ default_print \"zoed :P\"}}",
+		"This From Default Print zoed :P", -1)
+
+	boolean := assert.Equal(t, rendered, string_data)
+	if !boolean {
 		t.Error("Unexpected Rendered Result : ", rendered)
 	}
 
