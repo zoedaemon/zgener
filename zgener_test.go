@@ -15,9 +15,10 @@ import (
 )
 
 const (
-	TEMPLATE_FILE_WITH_FUNCTION string = "./test_template/page_view_with_function.html"
-	TEMPLATE_FILE               string = "./test_template/page_view.html"
-	JSON_FILE                   string = "./test/TestLoadFormJSON.json"
+	TEMPLATE_FILE_FIELDS_IN_TEMPLATE string = "./test_template/page_view_fields_in_template.html"
+	TEMPLATE_FILE_WITH_FUNCTION      string = "./test_template/page_view_with_function.html"
+	TEMPLATE_FILE                    string = "./test_template/page_view.html"
+	JSON_FILE                        string = "./test/TestLoadFormJSON.json"
 )
 
 var SharedFormatDetail string = "=== DETAIL  "
@@ -321,4 +322,69 @@ func TestRenderFormWithFunction(t *testing.T) {
 		t.Error("Unexpected Rendered Result : ", rendered)
 	}
 
+}
+
+func TestRenderFormFieldsInTemplate(t *testing.T) {
+	fmt.Println(SharedFormatDetail, `Prints All Fields Has Been Read From JSON 
+	to the Template :D`)
+
+	WebGenerator := New()
+	if WebGenerator == nil {
+		t.Errorf("Failed to CREATE new obj !!!")
+	}
+
+	//DONE : Need error handler for next commit
+	err := WebGenerator.LoadForm("TestForm", JSON_FILE)
+	if err != nil {
+		t.Error(err)
+	}
+
+	//load template file
+	err = WebGenerator.LoadTemplate("TestForm", TEMPLATE_FILE_FIELDS_IN_TEMPLATE)
+	if err != nil {
+		t.Error(err)
+	}
+
+	//create object
+	TestObj := Hello{}
+
+	//render to stdout
+	WebGenerator.Render(os.Stdout, "TestForm", zGenerWrapper{Data: TestObj})
+	buffer, err := WebGenerator.RenderToBuffer("TestForm", zGenerWrapper{Data: TestObj})
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	//must be converted to string
+	rendered := buffer.String()
+
+	t.Log(rendered)
+
+	/*
+		//use this to render to string, but call buffer.String() after this
+		buffer, err := WebGenerator.RenderToBuffer("TestForm", zGenerWrapper{Data: TestObj})
+
+		if err != nil {
+			t.Error(err)
+		}
+
+		//must be converted to string
+		rendered := buffer.String()
+
+		//NOTE :cannot testing strings.Compare(rendered,`<!DOCTYPE html>...
+		//		so we direct open template file and replace {{.}} to expected value
+		data, err := ioutil.ReadFile(TEMPLATE_FILE_FIELDS_IN_TEMPLATE)
+		string_data := string(data)
+		//replace template manually for string comparison
+		string_data = strings.Replace(string_data, "{{ .Print \"zoed :P\"}}",
+			"Hello zoed :P", -1)
+		string_data = strings.Replace(string_data, "{{ default_print \"zoed :P\"}}",
+			"This From Default Print zoed :P", -1)
+
+		boolean := assert.Equal(t, rendered, string_data)
+		if !boolean {
+			t.Error("Unexpected Rendered Result : ", rendered)
+		}
+	*/
 }

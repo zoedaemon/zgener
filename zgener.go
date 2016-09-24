@@ -23,6 +23,7 @@ const (
 	FORM_BOOL   = iota
 	FORM_INT    = iota
 	FORM_STRING = iota
+	FORM_TEXT   = iota
 	FORM_HIDDEN = iota
 	FORM_SELECT = iota
 )
@@ -77,6 +78,13 @@ type (
 	zGenButton struct {
 	}
 )
+
+type zGenerWrapper struct {
+	ZGener    interface{}
+	ZForm     interface{} //Obj Form saat ini :)
+	ZFormName string      //Nama form saat ini
+	Data      interface{}
+}
 
 //pointer to function
 type (
@@ -150,6 +158,33 @@ func defaultPrint(s string) string {
 	return ("This From Default Print " + s)
 }
 
+func render_field(obj interface{}) string {
+	zgeobj := obj.(*zGener)
+	return (`zgeobj.Forms["TestForm"].FormName = ` + zgeobj.Forms["TestForm"].FormName)
+}
+
+func (zgeobj *zGener) GenerateField(form_name string, field_name string) template.HTML {
+	//return (`zgeobj.Forms[form_name].Fields[field_name] = ` +
+	//	zgeobj.Forms[form_name].Fields[field_name].Type)
+	Type := zgeobj.Forms[form_name].Fields[field_name].Type
+	switch Type {
+	case "FORM_HIDDEN":
+		return template.HTML("<input type='hidden' name='" + field_name + "' id='" + field_name + "' />")
+		break
+	case "FORM_STRING":
+		Length := zgeobj.Forms[form_name].Fields[field_name].Length
+		return template.HTML("<input type='text' name='" + field_name + "' id='" +
+			field_name + "' length" + string(Length) + " />")
+		break
+
+	case "FORM_TEXT":
+		return template.HTML("<textarea name='" + field_name + "' id='" +
+			field_name + "'/>Default Value Must Set To zGenField :)</textarea>")
+		break
+	}
+	return "<< zGener ERROR : Invalid Field Type !!!>>"
+}
+
 func (zgeobj *zGener) LoadTemplate(form_name string, file string) error {
 
 	if _, err := os.Stat(file); err != nil {
@@ -168,7 +203,10 @@ func (zgeobj *zGener) LoadTemplate(form_name string, file string) error {
 	}
 
 	tmpl := template.New(form_name) //.Delims("{**", "**}")
+
+	//set default function
 	tmpl.Funcs(template.FuncMap{"default_print": defaultPrint})
+	tmpl.Funcs(template.FuncMap{"zgener_field": render_field})
 
 	zgeobj.Templates[form_name], err = tmpl.Parse(string(dat))
 	if err != nil {
@@ -181,14 +219,33 @@ func (zgeobj *zGener) LoadTemplate(form_name string, file string) error {
 
 func (zgeobj *zGener) Render(w io.Writer, form_name string, data interface{}) error {
 	//ExecuteTemplate(w, name, data)
-	err := zgeobj.Templates[form_name].Execute(w, data)
+	var Data interface{}
+	switch data.(type) {
+	case zGenerWrapper:
+		Wrapper := data.(zGenerWrapper)
+		Data = zGenerWrapper{zgeobj, zgeobj.Forms[form_name], form_name, Wrapper.Data}
+		break
+	default:
+		Data = data
+		break
+	}
+	err := zgeobj.Templates[form_name].Execute(w, Data)
 	return err
 }
 
 func (zgeobj *zGener) RenderToBuffer(form_name string, data interface{}) (*bytes.Buffer,
 	error) {
-
+	var Data interface{}
+	switch data.(type) {
+	case zGenerWrapper:
+		Wrapper := data.(zGenerWrapper)
+		Data = zGenerWrapper{zgeobj, zgeobj.Forms[form_name], form_name, Wrapper.Data}
+		break
+	default:
+		Data = data
+		break
+	}
 	var buff *bytes.Buffer = new(bytes.Buffer)
-	err := zgeobj.Templates[form_name].Execute(buff, data)
+	err := zgeobj.Templates[form_name].Execute(buff, Data)
 	return buff, err
 }
