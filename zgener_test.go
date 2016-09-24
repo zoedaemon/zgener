@@ -3,16 +3,20 @@ package zgener
 import (
 	"encoding/json"
 	"fmt"
-	"io"
+	//	"io"
 	"io/ioutil"
-	"net/http"
+	//	"net/http"
 	"os"
 	"reflect"
 	"strings"
 	"testing"
 
-	"github.com/labstack/echo"
-	Engine "github.com/labstack/echo/engine/standard"
+	//	"github.com/labstack/echo"
+	//	Engine "github.com/labstack/echo/engine/standard"
+)
+
+const (
+	TEMPLATE_FILE string = "./test_template/page_view.html"
 )
 
 var SharedFormatDetail string = "=== DETAIL  "
@@ -189,30 +193,30 @@ func TestAutoLoadFormJSON(t *testing.T) {
 		t.Errorf("Failed to CREATE new obj !!!")
 	}
 
-	WebGenerator.loadForm("TestForm", "./test/TestLoadFormJSON.json")
+	WebGenerator.LoadForm("TestForm", "./test/TestLoadFormJSON.json")
 
 	//strings.Compare(WebGenerator.Forms["TestForm"].RawFields["name"]
-	if strings.Compare(WebGenerator.getForm("TestForm").Fields["name"].Type,
+	if strings.Compare(WebGenerator.GetForm("TestForm").Fields["name"].Type,
 		"FORM_STRING") != 0 {
 		t.Error("FormName.Fields Not FORM_STRING : ",
 			WebGenerator.Forms["TestForm"].Fields["id"].Caption)
 	}
 	//coba tampilkan outputnya
 	if TEST_SHOW_OUTPUT_DATA {
-		WebGenerator.printForm("TestForm", t.Logf)
-		WebGenerator.printFormToFile("TestForm", fmt.Fprintf, os.Stdout)
+		WebGenerator.PrintForm("TestForm", t.Logf)
+		WebGenerator.PrintFormToFile("TestForm", fmt.Fprintf, os.Stdout)
 	}
 }
 
 ///////////////
-
+/*
 type Template struct {
 	ZGOBJ *zGener
 }
 
 func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	return t.ZGOBJ.Render(w, name, "World")
-}
+	return t.ZGOBJ.render(w, name, "World")
+}*/
 
 func TestRenderFormJSON(t *testing.T) {
 
@@ -223,7 +227,7 @@ func TestRenderFormJSON(t *testing.T) {
 		t.Errorf("Failed to CREATE new obj !!!")
 	}
 
-	WebGenerator.loadForm("TestForm", "./test/TestLoadFormJSON.json")
+	WebGenerator.LoadForm("TestForm", "./test/TestLoadFormJSON.json")
 
 	//TODO : Need error handler for next commit
 	/*	err := WebGenerator.loadForm("TestForm", "./test/TestLoadFormJSON.json")
@@ -234,21 +238,42 @@ func TestRenderFormJSON(t *testing.T) {
 
 	//Parse json template with no error ???
 	//	err := WebGenerator.loadTemplate("TestForm", "./test/TestLoadFormJSON.json")
-	err := WebGenerator.loadTemplate("TestForm", "./test_template/page_view.html")
+	err := WebGenerator.LoadTemplate("TestForm", TEMPLATE_FILE)
 	if err != nil {
 		t.Error(err)
 	}
 
 	WebGenerator.Render(os.Stdout, "TestForm", "World")
 
-	e := echo.New()
-	temp := &Template{WebGenerator}
-	e.SetRenderer(temp)
-	// Route => handler
-	e.GET("/", func(c echo.Context) error {
-		return c.Render(http.StatusOK, "TestForm", "World")
-	})
-	// Start server
-	e.Run(Engine.New(":80"))
+	//use this to render to string, but call buffer.String() after this
+	buffer, err := WebGenerator.RenderToBuffer("TestForm", "World")
 
+	if err != nil {
+		t.Error(err)
+	}
+
+	//must be converted to string
+	rendered := buffer.String()
+
+	//NOTE :cannot testing strings.Compare(rendered,`<!DOCTYPE html>...
+	//		so we direct open template file and replace {{.}} to expected value
+	data, err := ioutil.ReadFile(TEMPLATE_FILE)
+	string_data := string(data)
+	//replace template manually for string comparison
+	string_data = strings.Replace(string_data, "{{.}}", "World", -1)
+
+	if strings.Compare(rendered, string_data) != 0 {
+		t.Error("Unexpected Rendered Result : ", rendered)
+	}
+	/*
+		e := echo.New()
+		temp := &Template{WebGenerator}
+		e.SetRenderer(temp)
+		// Route => handler
+		e.GET("/", func(c echo.Context) error {
+			return c.Render(http.StatusOK, "TestForm", "World")
+		})
+		// Start server
+		e.Run(Engine.New(":80"))
+	*/
 }

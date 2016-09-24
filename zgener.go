@@ -5,6 +5,7 @@ from json files
 package zgener
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -92,7 +93,7 @@ func New() *zGener {
 	return Obj
 }
 
-func (zgeobj *zGener) loadForm(form_name string, file string) {
+func (zgeobj *zGener) LoadForm(form_name string, file string) {
 
 	//object form that hold data from json file
 	var NewForm *zGenForm
@@ -110,11 +111,11 @@ func (zgeobj *zGener) loadForm(form_name string, file string) {
 	zgeobj.Forms[form_name] = NewForm
 }
 
-func (zgeobj *zGener) getForm(form_name string) *zGenForm {
+func (zgeobj *zGener) GetForm(form_name string) *zGenForm {
 	return zgeobj.Forms[form_name]
 }
 
-func (zgeobj *zGener) printForm(form_name string, print_func LogPrintForm) {
+func (zgeobj *zGener) PrintForm(form_name string, print_func LogPrintForm) {
 	for _, val := range zgeobj.Forms[form_name].Fields {
 		if len(val.Type) > 0 {
 			print_func(PRINTFORM_FIELD_TYPE, form_name, val.Type)
@@ -129,7 +130,7 @@ func (zgeobj *zGener) printForm(form_name string, print_func LogPrintForm) {
 	}
 }
 
-func (zgeobj *zGener) printFormToFile(form_name string, print_func LogPrintFormToFile, f io.Writer) {
+func (zgeobj *zGener) PrintFormToFile(form_name string, print_func LogPrintFormToFile, f io.Writer) {
 	for _, val := range zgeobj.Forms[form_name].Fields {
 		if len(val.Type) > 0 {
 			print_func(f, PRINTFORM_FIELD_TYPE+"\n", form_name, val.Type)
@@ -144,7 +145,7 @@ func (zgeobj *zGener) printFormToFile(form_name string, print_func LogPrintFormT
 	}
 }
 
-func (zgeobj *zGener) loadTemplate(form_name string, file string) error {
+func (zgeobj *zGener) LoadTemplate(form_name string, file string) error {
 
 	if _, err := os.Stat(file); err != nil {
 		if os.IsNotExist(err) {
@@ -173,6 +174,14 @@ func (zgeobj *zGener) loadTemplate(form_name string, file string) error {
 
 func (zgeobj *zGener) Render(w io.Writer, form_name string, data interface{}) error {
 	//ExecuteTemplate(w, name, data)
-	zgeobj.Templates[form_name].Execute(w, data)
-	return nil
+	err := zgeobj.Templates[form_name].Execute(w, data)
+	return err
+}
+
+func (zgeobj *zGener) RenderToBuffer(form_name string, data interface{}) (*bytes.Buffer,
+	error) {
+
+	var buff *bytes.Buffer = new(bytes.Buffer)
+	err := zgeobj.Templates[form_name].Execute(buff, data)
+	return buff, err
 }
