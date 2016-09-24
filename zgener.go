@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -169,7 +168,7 @@ func (zgeobj *zGener) LoadTemplate(form_name string, file string) error {
 		return errors.New("error parse template : " + err.Error())
 	}
 
-	fmt.Println(string(dat))
+	//fmt.Println(string(dat))
 	return nil
 }
 
