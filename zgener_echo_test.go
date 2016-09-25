@@ -18,11 +18,11 @@ import (
 )
 
 type Template struct {
-	ZGOBJ *zGener
+	ZGOBJ *ZGener
 }
 
 func (t *Template) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
-	return t.ZGOBJ.Render(w, name, "World") //Error when change data zGenerWrapper{Data:
+	return t.ZGOBJ.Render(w, name, "World") //Error when change data ZGenerWrapper{Data:
 }
 
 func RenderToHtml(c echo.Context) error {
@@ -82,13 +82,13 @@ func TestRenderFormJSON_EchoServer(t *testing.T) {
 }
 
 type TemplateGenerator struct {
-	ZGOBJ *zGener
+	ZGOBJ *ZGener
 }
 
 func (t *TemplateGenerator) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
 	//create object
 	TestObj := Hello{}
-	return t.ZGOBJ.Render(w, name, zGenerWrapper{Data: TestObj})
+	return t.ZGOBJ.Render(w, name, ZGenerWrapper{Data: TestObj})
 }
 
 /*

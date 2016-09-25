@@ -188,7 +188,7 @@ func TestManualLoadFormJSONComplex(t *testing.T) {
 
 func TestAutoLoadFormJSON(t *testing.T) {
 
-	fmt.Println(SharedFormatDetail, "Load Form Data From JSON File With zGener's Function")
+	fmt.Println(SharedFormatDetail, "Load Form Data From JSON File With ZGener's Function")
 
 	WebGenerator := New()
 	if WebGenerator == nil {
@@ -349,8 +349,8 @@ func TestRenderFormFieldsInTemplate(t *testing.T) {
 	TestObj := Hello{}
 
 	//render to stdout
-	WebGenerator.Render(os.Stdout, "TestForm", zGenerWrapper{Data: TestObj})
-	buffer, err := WebGenerator.RenderToBuffer("TestForm", zGenerWrapper{Data: TestObj})
+	WebGenerator.Render(os.Stdout, "TestForm", ZGenerWrapper{Data: TestObj})
+	buffer, err := WebGenerator.RenderToBuffer("TestForm", ZGenerWrapper{Data: TestObj})
 
 	if err != nil {
 		t.Error(err)
@@ -363,7 +363,7 @@ func TestRenderFormFieldsInTemplate(t *testing.T) {
 
 	/*
 		//use this to render to string, but call buffer.String() after this
-		buffer, err := WebGenerator.RenderToBuffer("TestForm", zGenerWrapper{Data: TestObj})
+		buffer, err := WebGenerator.RenderToBuffer("TestForm", ZGenerWrapper{Data: TestObj})
 
 		if err != nil {
 			t.Error(err)

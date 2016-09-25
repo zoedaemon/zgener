@@ -39,7 +39,7 @@ var (
 )
 
 /*zgof's fields */
-type zGener struct {
+type ZGener struct {
 	/*key is file name*/
 	RawForms  map[string]string
 	Forms     map[string]*zGenForm
@@ -79,7 +79,7 @@ type (
 	}
 )
 
-type zGenerWrapper struct {
+type ZGenerWrapper struct {
 	ZGener    interface{}
 	ZForm     interface{} //Obj Form saat ini :)
 	ZFormName string      //Nama form saat ini
@@ -93,14 +93,14 @@ type (
 )
 
 /*create new instance of zgof*/
-func New() *zGener {
-	Obj := new(zGener)
+func New() *ZGener {
+	Obj := new(ZGener)
 	Obj.Forms = make(map[string]*zGenForm)
 	Obj.Templates = make(map[string]*template.Template)
 	return Obj
 }
 
-func (zgeobj *zGener) LoadForm(form_name string, file string) error {
+func (zgeobj *ZGener) LoadForm(form_name string, file string) error {
 
 	//object form that hold data from json file
 	var NewForm *zGenForm
@@ -119,11 +119,11 @@ func (zgeobj *zGener) LoadForm(form_name string, file string) error {
 	return nil
 }
 
-func (zgeobj *zGener) GetForm(form_name string) *zGenForm {
+func (zgeobj *ZGener) GetForm(form_name string) *zGenForm {
 	return zgeobj.Forms[form_name]
 }
 
-func (zgeobj *zGener) PrintForm(form_name string, print_func LogPrintForm) {
+func (zgeobj *ZGener) PrintForm(form_name string, print_func LogPrintForm) {
 	for _, val := range zgeobj.Forms[form_name].Fields {
 		if len(val.Type) > 0 {
 			print_func(PRINTFORM_FIELD_TYPE, form_name, val.Type)
@@ -138,7 +138,7 @@ func (zgeobj *zGener) PrintForm(form_name string, print_func LogPrintForm) {
 	}
 }
 
-func (zgeobj *zGener) PrintFormToFile(form_name string, print_func LogPrintFormToFile, f io.Writer) {
+func (zgeobj *ZGener) PrintFormToFile(form_name string, print_func LogPrintFormToFile, f io.Writer) {
 	for _, val := range zgeobj.Forms[form_name].Fields {
 		if len(val.Type) > 0 {
 			print_func(f, PRINTFORM_FIELD_TYPE+"\n", form_name, val.Type)
@@ -159,11 +159,11 @@ func defaultPrint(s string) string {
 }
 
 func render_field(obj interface{}) string {
-	zgeobj := obj.(*zGener)
+	zgeobj := obj.(*ZGener)
 	return (`zgeobj.Forms["TestForm"].FormName = ` + zgeobj.Forms["TestForm"].FormName)
 }
 
-func (zgeobj *zGener) LoadTemplate(form_name string, file string) error {
+func (zgeobj *ZGener) LoadTemplate(form_name string, file string) error {
 
 	if _, err := os.Stat(file); err != nil {
 		if os.IsNotExist(err) {
@@ -195,13 +195,14 @@ func (zgeobj *zGener) LoadTemplate(form_name string, file string) error {
 	return nil
 }
 
-func (zgeobj *zGener) Render(w io.Writer, form_name string, data interface{}) error {
+//TODO : template_name dan form_name bisa dipisah untuk penggunaan 1 form untuk beberapa template
+func (zgeobj *ZGener) Render(w io.Writer, form_name string, data interface{}) error {
 	//ExecuteTemplate(w, name, data)
 	var Data interface{}
 	switch data.(type) {
-	case zGenerWrapper:
-		Wrapper := data.(zGenerWrapper)
-		Data = zGenerWrapper{zgeobj, zgeobj.Forms[form_name], form_name, Wrapper.Data}
+	case ZGenerWrapper:
+		Wrapper := data.(ZGenerWrapper)
+		Data = ZGenerWrapper{zgeobj, zgeobj.Forms[form_name], form_name, Wrapper.Data}
 		break
 	default:
 		Data = data
@@ -211,13 +212,13 @@ func (zgeobj *zGener) Render(w io.Writer, form_name string, data interface{}) er
 	return err
 }
 
-func (zgeobj *zGener) RenderToBuffer(form_name string, data interface{}) (*bytes.Buffer,
+func (zgeobj *ZGener) RenderToBuffer(form_name string, data interface{}) (*bytes.Buffer,
 	error) {
 	var Data interface{}
 	switch data.(type) {
-	case zGenerWrapper:
-		Wrapper := data.(zGenerWrapper)
-		Data = zGenerWrapper{zgeobj, zgeobj.Forms[form_name], form_name, Wrapper.Data}
+	case ZGenerWrapper:
+		Wrapper := data.(ZGenerWrapper)
+		Data = ZGenerWrapper{zgeobj, zgeobj.Forms[form_name], form_name, Wrapper.Data}
 		break
 	default:
 		Data = data
@@ -228,7 +229,7 @@ func (zgeobj *zGener) RenderToBuffer(form_name string, data interface{}) (*bytes
 	return buff, err
 }
 
-func (zgeobj *zGener) GenerateField(form_name string, field_name string) (template.HTML, error) {
+func (zgeobj *ZGener) GenerateField(form_name string, field_name string) (template.HTML, error) {
 	//return (`zgeobj.Forms[form_name].Fields[field_name] = ` +
 	//	zgeobj.Forms[form_name].Fields[field_name].Type)
 	Type := zgeobj.Forms[form_name].Fields[field_name].Type
@@ -250,5 +251,5 @@ func (zgeobj *zGener) GenerateField(form_name string, field_name string) (templa
 	}
 
 	//execution will be panic if non nil return value sent
-	return "", errors.New("<< zGener ERROR : Invalid Field Type !!!>>") //TODO : error handle in template ???
+	return "", errors.New("<< ZGener ERROR : Invalid Field Type !!!>>") //TODO : error handle in template ???
 }
