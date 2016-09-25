@@ -163,28 +163,6 @@ func render_field(obj interface{}) string {
 	return (`zgeobj.Forms["TestForm"].FormName = ` + zgeobj.Forms["TestForm"].FormName)
 }
 
-func (zgeobj *zGener) GenerateField(form_name string, field_name string) template.HTML {
-	//return (`zgeobj.Forms[form_name].Fields[field_name] = ` +
-	//	zgeobj.Forms[form_name].Fields[field_name].Type)
-	Type := zgeobj.Forms[form_name].Fields[field_name].Type
-	switch Type {
-	case "FORM_HIDDEN":
-		return template.HTML("<input type='hidden' name='" + field_name + "' id='" + field_name + "' />")
-		break
-	case "FORM_STRING":
-		Length := zgeobj.Forms[form_name].Fields[field_name].Length
-		return template.HTML("<input type='text' name='" + field_name + "' id='" +
-			field_name + "' length" + string(Length) + " />")
-		break
-
-	case "FORM_TEXT":
-		return template.HTML("<textarea name='" + field_name + "' id='" +
-			field_name + "'/>Default Value Must Set To zGenField :)</textarea>")
-		break
-	}
-	return "<< zGener ERROR : Invalid Field Type !!!>>"
-}
-
 func (zgeobj *zGener) LoadTemplate(form_name string, file string) error {
 
 	if _, err := os.Stat(file); err != nil {
@@ -248,4 +226,29 @@ func (zgeobj *zGener) RenderToBuffer(form_name string, data interface{}) (*bytes
 	var buff *bytes.Buffer = new(bytes.Buffer)
 	err := zgeobj.Templates[form_name].Execute(buff, Data)
 	return buff, err
+}
+
+func (zgeobj *zGener) GenerateField(form_name string, field_name string) (template.HTML, error) {
+	//return (`zgeobj.Forms[form_name].Fields[field_name] = ` +
+	//	zgeobj.Forms[form_name].Fields[field_name].Type)
+	Type := zgeobj.Forms[form_name].Fields[field_name].Type
+	switch Type {
+	case "FORM_HIDDEN":
+		return template.HTML("<input type='hidden' name='" + field_name +
+			"' id='" + field_name + "' />"), nil
+		break
+	case "FORM_STRING":
+		Length := zgeobj.Forms[form_name].Fields[field_name].Length
+		return template.HTML("<input type='text' name='" + field_name + "' id='" +
+			field_name + "' length" + string(Length) + " />"), nil
+		break
+
+	case "FORM_TEXT":
+		return template.HTML("<textarea name='" + field_name + "' id='" +
+			field_name + "'/>Default Value Must Set To zGenField :)</textarea>"), nil
+		break
+	}
+
+	//execution will be panic if non nil return value sent
+	return "", errors.New("<< zGener ERROR : Invalid Field Type !!!>>") //TODO : error handle in template ???
 }

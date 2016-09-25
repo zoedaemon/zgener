@@ -14,6 +14,7 @@
 			"caption" : "Provinsi"
 		},
 		"village" : {
+			"type" : "FORM_TEXT",
 			"caption" : "Village"
 		}
 	}

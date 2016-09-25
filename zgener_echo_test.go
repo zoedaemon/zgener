@@ -12,7 +12,7 @@ import (
 
 	"github.com/labstack/echo"
 	Engine "github.com/labstack/echo/engine/standard"
-	"github.com/labstack/echo/middleware"
+	//	"github.com/labstack/echo/middleware"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -91,9 +91,10 @@ func (t *TemplateGenerator) Render(w io.Writer, name string, data interface{}, c
 	return t.ZGOBJ.Render(w, name, zGenerWrapper{Data: TestObj})
 }
 
+/*
 func TestRenderFormFieldsInTemplate_EchoServer(t *testing.T) {
 
-	fmt.Println(SharedFormatDetail, `Prints All Fields Has Been Read From JSON 
+	fmt.Println(SharedFormatDetail, `Prints All Fields Has Been Read From JSON
 	to the Template With Echo Server :D`)
 
 	WebGenerator := New()
@@ -124,10 +125,11 @@ func TestRenderFormFieldsInTemplate_EchoServer(t *testing.T) {
 	//// Setup
 	e := echo.New()
 	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
+	//e.Use(middleware.Recover())
 	//must set the template
 	temp := &TemplateGenerator{WebGenerator}
 	e.GET("/", RenderToHtml)
 	e.SetRenderer(temp)
 	e.Run(Engine.New(":80"))
 }
+*/

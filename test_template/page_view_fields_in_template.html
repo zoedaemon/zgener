@@ -9,15 +9,25 @@
 
 {{zgener_field .ZGener}}
 
+{{/*
 {{ range $key, $value := .ZForm.Fields }}
    <li><strong>{{ $key }}</strong>: {{ $value.Type }}</li>
 {{ end }}
+*/}}
 
 {{with .ZFormName}}
 	{{$.ZGener.GenerateField . "id"}}
 	{{$.ZGener.GenerateField . "name"}}
 	{{$.ZGener.GenerateField . "province"}}
 {{end}}
+
+{{ range $key, $value := .ZForm.Fields }}
+	{{with $.ZFormName}}
+		<li><strong>{{(index (index $.ZGener.Forms "TestForm").Fields $key).Caption}}</strong>: {{$.ZGener.GenerateField . $key}}</li>
+	{{end}}
+{{ end }}
+
+{{/**/}}
 
 {{/* CAN'T WORK :( : .ZGener.PrintForm "TestForm" printf */}}
 </BODY>
