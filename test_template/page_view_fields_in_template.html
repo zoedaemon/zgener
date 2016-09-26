@@ -27,6 +27,11 @@
 	{{end}}
 {{ end }}
 
+{{$_ := .ZFormName}}
+{{ range $key, $value := $.ZForm.Fields }}
+	<li><strong>{{$.ZGener.Caption $_ $key}}</strong>: {{$.ZGener.GenerateField $_ $key}}</li>
+{{end}}
+
 {{/**/}}
 
 {{/* CAN'T WORK :( : .ZGener.PrintForm "TestForm" printf */}}

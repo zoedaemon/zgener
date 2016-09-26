@@ -253,3 +253,7 @@ func (zgeobj *ZGener) GenerateField(form_name string, field_name string) (templa
 	//execution will be panic if non nil return value sent
 	return "", errors.New("<< ZGener ERROR : Invalid Field Type !!!>>") //TODO : error handle in template ???
 }
+
+func (zgeobj *ZGener) Caption(form_name string, field_name string) string {
+	return zgeobj.Forms[form_name].Fields[field_name].Caption
+}

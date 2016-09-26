@@ -12,7 +12,7 @@ import (
 
 	"github.com/labstack/echo"
 	Engine "github.com/labstack/echo/engine/standard"
-	//	"github.com/labstack/echo/middleware"
+	"github.com/labstack/echo/middleware"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -91,7 +91,6 @@ func (t *TemplateGenerator) Render(w io.Writer, name string, data interface{}, c
 	return t.ZGOBJ.Render(w, name, ZGenerWrapper{Data: TestObj})
 }
 
-/*
 func TestRenderFormFieldsInTemplate_EchoServer(t *testing.T) {
 
 	fmt.Println(SharedFormatDetail, `Prints All Fields Has Been Read From JSON
@@ -132,4 +131,3 @@ func TestRenderFormFieldsInTemplate_EchoServer(t *testing.T) {
 	e.SetRenderer(temp)
 	e.Run(Engine.New(":80"))
 }
-*/
