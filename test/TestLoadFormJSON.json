@@ -1,7 +1,11 @@
 {
 	"form-name"	: "data-wisata-from-json",
+	
 	"form-fields": {
 		"id" : {
+			"type" : "FORM_HIDDEN"
+		},
+		"csrf" : {
 			"type" : "FORM_HIDDEN"
 		},
 		"name" : {
@@ -16,6 +20,24 @@
 		"village" : {
 			"type" : "FORM_TEXT",
 			"caption" : "Village"
+		}
+	},
+
+	"form-buttons" : {
+		"submit:OnFormInsert" :{
+			"caption" : "Tambah Data",
+			"type" : "submit",
+			"style" : ".btn-submit" 
+		},
+		"submit:OnFormUpdate" :{
+			"caption" : "Simpan Perubahan",
+			"type" : "submit" 
+		},
+		"cancel" : {
+			"caption" : "Batalkan",
+			"style" : ".btn-submit", 
+			"type" : "button",
+			"action":"OnClick:'window.history.back();'"
 		}
 	}
 }

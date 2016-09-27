@@ -349,7 +349,7 @@ func TestRenderFormFieldsInTemplate(t *testing.T) {
 	TestObj := Hello{}
 
 	//render to stdout
-	WebGenerator.Render(os.Stdout, "TestForm", ZGenerWrapper{Data: TestObj})
+	//WebGenerator.Render(os.Stdout, "TestForm", ZGenerWrapper{Data: TestObj})
 	buffer, err := WebGenerator.RenderToBuffer("TestForm", ZGenerWrapper{Data: TestObj})
 
 	if err != nil {
@@ -359,32 +359,35 @@ func TestRenderFormFieldsInTemplate(t *testing.T) {
 	//must be converted to string
 	rendered := buffer.String()
 
-	t.Log(rendered)
+	//t.Log(rendered)
 
-	/*
-		//use this to render to string, but call buffer.String() after this
-		buffer, err := WebGenerator.RenderToBuffer("TestForm", ZGenerWrapper{Data: TestObj})
+	//NOTE :cannot testing strings.Compare(rendered,`<!DOCTYPE html>...
+	//		so we direct open template file and replace {{.}} to expected value
+	data, err := ioutil.ReadFile(TEMPLATE_FILE_FIELDS_IN_TEMPLATE)
+	string_data := string(data)
+	//replace template manually for string comparison
+	string_data = strings.Replace(string_data, "{{ .Data.Print \"zoed :P\"}}",
+		"Hello zoed :P", -1)
+	string_data = strings.Replace(string_data, "{{ default_print \"zoed :P\"}}",
+		"This From Default Print zoed :P", -1)
+	string_data = strings.Replace(string_data, `{{with $z := .ZGener.Forms}}{{(index $z "TestForm").FormName}}{{end}}`,
+		"data-wisata-from-json", -1)
+	string_data = strings.Replace(string_data, `{{(index .ZGener.Forms "TestForm").FormName}}`,
+		"data-wisata-from-json", -1)
+	string_data = strings.Replace(string_data, `{{(index (index .ZGener.Forms "TestForm").Fields "name").Type}}`,
+		"FORM_STRING", -1)
+	string_data = strings.Replace(string_data, `{{ range $key, $value := .ZForm.Fields }}<li><strong>{{ $key }}</strong>: {{ $value.Type }}</li>{{ end }}`,
+		"<li><strong>csrf</strong>: FORM_HIDDEN</li><li><strong>id</strong>: FORM_HIDDEN</li><li><strong>name</strong>: FORM_STRING</li><li><strong>province</strong>: FORM_TEXT</li><li><strong>village</strong>: FORM_TEXT</li>", -1)
+	string_data = strings.Replace(string_data, `{{with .ZFormName}}{{$.ZGener.GenerateField . "id"}}{{$.ZGener.GenerateField . "name"}}{{$.ZGener.GenerateField . "province"}}{{end}}`,
+		"<input type='hidden' name='id' id='id' /><input type='text' name='name' id='name' length='100' /><textarea name='province' id='province'/>Default Value Must Set To zGenField :)</textarea>", -1)
+	string_data = strings.Replace(string_data, `{{ range $key, $value := .ZForm.Fields }}{{with $.ZFormName}}<li><strong>{{(index (index $.ZGener.Forms "TestForm").Fields $key).Caption}}</strong>:{{$.ZGener.GenerateField . $key}}</li>{{end}}{{ end }}`,
+		"<li><strong></strong>:<input type='hidden' name='csrf' id='csrf' /></li><li><strong></strong>:<input type='hidden' name='id' id='id' /></li><li><strong>Name</strong>:<input type='text' name='name' id='name' length='100' /></li><li><strong>Provinsi</strong>:<textarea name='province' id='province'/>Default Value Must Set To zGenField :)</textarea></li><li><strong>Village</strong>:<textarea name='village' id='village'/>Default Value Must Set To zGenField :)</textarea></li>", -1)
+	string_data = strings.Replace(string_data, `{{$_ := .ZFormName}}{{ range $key, $value := $.ZForm.Fields }}<li><strong>{{$.ZGener.Caption $_ $key}}</strong>: {{$.ZGener.GenerateField $_ $key}}</li>{{end}}`,
+		"<li><strong></strong>: <input type='hidden' name='csrf' id='csrf' /></li><li><strong></strong>: <input type='hidden' name='id' id='id' /></li><li><strong>Name</strong>: <input type='text' name='name' id='name' length='100' /></li><li><strong>Provinsi</strong>: <textarea name='province' id='province'/>Default Value Must Set To zGenField :)</textarea></li><li><strong>Village</strong>: <textarea name='village' id='village'/>Default Value Must Set To zGenField :)</textarea></li>", -1)
 
-		if err != nil {
-			t.Error(err)
-		}
+	boolean := assert.Equal(t, rendered, string_data)
+	if !boolean {
+		t.Error("Unexpected Rendered Result : ", rendered)
+	}
 
-		//must be converted to string
-		rendered := buffer.String()
-
-		//NOTE :cannot testing strings.Compare(rendered,`<!DOCTYPE html>...
-		//		so we direct open template file and replace {{.}} to expected value
-		data, err := ioutil.ReadFile(TEMPLATE_FILE_FIELDS_IN_TEMPLATE)
-		string_data := string(data)
-		//replace template manually for string comparison
-		string_data = strings.Replace(string_data, "{{ .Print \"zoed :P\"}}",
-			"Hello zoed :P", -1)
-		string_data = strings.Replace(string_data, "{{ default_print \"zoed :P\"}}",
-			"This From Default Print zoed :P", -1)
-
-		boolean := assert.Equal(t, rendered, string_data)
-		if !boolean {
-			t.Error("Unexpected Rendered Result : ", rendered)
-		}
-	*/
 }

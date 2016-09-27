@@ -12,6 +12,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strconv"
 )
 
 const (
@@ -53,18 +54,17 @@ type ZGener struct {
 }
 
 type zGenForm struct {
-	FormName  string `json:"form-name"`
-	RawFields map[string]interface{}
-	Fields    map[string]zGenField `json:"form-fields"`
+	FormName string               `json:"form-name"`
+	Fields   map[string]zGenField `json:"form-fields"`
 
 	Actions zGenAction
-	Buttons zGenButton
+	Buttons map[string]zGenButton `json:"form-buttons"`
 }
 
 type (
 	zGenField struct {
 		Type    string `json:"type"`
-		Length  uint   `json:"length"`
+		Length  uint16 `json:"length"`
 		Caption string `json:"caption"`
 		/*
 			FUTURE
@@ -76,6 +76,10 @@ type (
 	}
 
 	zGenButton struct {
+		Type    string `json:"type"`
+		Caption string `json:"caption"`
+		Style   string `json:"style"`
+		Action  string `json:"action"`
 	}
 )
 
@@ -158,11 +162,6 @@ func defaultPrint(s string) string {
 	return ("This From Default Print " + s)
 }
 
-func render_field(obj interface{}) string {
-	zgeobj := obj.(*ZGener)
-	return (`zgeobj.Forms["TestForm"].FormName = ` + zgeobj.Forms["TestForm"].FormName)
-}
-
 func (zgeobj *ZGener) LoadTemplate(form_name string, file string) error {
 
 	if _, err := os.Stat(file); err != nil {
@@ -184,7 +183,6 @@ func (zgeobj *ZGener) LoadTemplate(form_name string, file string) error {
 
 	//set default function
 	tmpl.Funcs(template.FuncMap{"default_print": defaultPrint})
-	tmpl.Funcs(template.FuncMap{"zgener_field": render_field})
 
 	zgeobj.Templates[form_name], err = tmpl.Parse(string(dat))
 	if err != nil {
@@ -241,9 +239,8 @@ func (zgeobj *ZGener) GenerateField(form_name string, field_name string) (templa
 	case "FORM_STRING":
 		Length := zgeobj.Forms[form_name].Fields[field_name].Length
 		return template.HTML("<input type='text' name='" + field_name + "' id='" +
-			field_name + "' length" + string(Length) + " />"), nil
+			field_name + "' length='" + strconv.FormatUint(uint64(Length), 10) + "' />"), nil
 		break
-
 	case "FORM_TEXT":
 		return template.HTML("<textarea name='" + field_name + "' id='" +
 			field_name + "'/>Default Value Must Set To zGenField :)</textarea>"), nil

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<HTML>
+<BODY> 
+{{ .Data.Print "zoed :P"}}
+{{ default_print "zoed :P"}}
+{{with $z := .ZGener.Forms}}{{(index $z "TestForm").FormName}}{{end}}
+{{(index .ZGener.Forms "TestForm").FormName}}
+{{(index (index .ZGener.Forms "TestForm").Fields "name").Type}}
+
+{{zgener_field .ZGener}}
+
+{{/*
+{{ range $key, $value := .ZForm.Fields }}
+   <li><strong>{{ $key }}</strong>: {{ $value.Type }}</li>
+{{ end }}
+*/}}
+
+{{with .ZFormName}}
+	{{$.ZGener.GenerateField . "id"}}
+	{{$.ZGener.GenerateField . "name"}}
+	{{$.ZGener.GenerateField . "province"}}
+{{end}}
+
+{{ range $key, $value := .ZForm.Fields }}
+	{{with $.ZFormName}}
+		<li><strong>{{(index (index $.ZGener.Forms "TestForm").Fields $key).Caption}}</strong>: {{$.ZGener.GenerateField . $key}}</li>
+	{{end}}
+{{ end }}
+
+{{Other style to generate fields}}
+{{$_ := .ZFormName}}
+{{ range $key, $value := $.ZForm.Fields }}
+	<li><strong>{{$.ZGener.Caption $_ $key}}</strong>: {{$.ZGener.GenerateField $_ $key}}</li>
+{{end}}
+
+
+{{/* CAN'T WORK :( : .ZGener.PrintForm "TestForm" printf */}}
+</BODY>
+</HTML>
