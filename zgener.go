@@ -27,6 +27,8 @@ const (
 	FORM_TEXT   = iota
 	FORM_HIDDEN = iota
 	FORM_SELECT = iota
+	FORM_SUBMIT = iota
+	FORM_BUTTON = iota
 )
 
 const (
@@ -88,6 +90,9 @@ type ZGenerWrapper struct {
 	ZForm     interface{} //Obj Form saat ini :)
 	ZFormName string      //Nama form saat ini
 	Data      interface{}
+
+	//TODO : PROPOSAL : [ insert | update ]
+	//OnFormAction interface{}
 }
 
 //pointer to function
@@ -239,11 +244,31 @@ func (zgeobj *ZGener) GenerateField(form_name string, field_name string) (templa
 	case "FORM_STRING":
 		Length := zgeobj.Forms[form_name].Fields[field_name].Length
 		return template.HTML("<input type='text' name='" + field_name + "' id='" +
-			field_name + "' length='" + strconv.FormatUint(uint64(Length), 10) + "' />"), nil
+			field_name + "' size='" + strconv.FormatUint(uint64(Length), 10) + "' />"), nil
 		break
 	case "FORM_TEXT":
 		return template.HTML("<textarea name='" + field_name + "' id='" +
 			field_name + "'/>Default Value Must Set To zGenField :)</textarea>"), nil
+		break
+	}
+
+	//execution will be panic if non nil return value sent
+	return "", errors.New("<< ZGener ERROR : Invalid Field Type !!!>>") //TODO : error handle in template ???
+}
+
+func (zgeobj *ZGener) GenerateButton(form_name string, button_name string) (template.HTML, error) {
+	//return (`zgeobj.Forms[form_name].Fields[field_name] = ` +
+	//	zgeobj.Forms[form_name].Fields[field_name].Type)
+	Type := zgeobj.Forms[form_name].Buttons[button_name].Type
+	Caption := zgeobj.Forms[form_name].Buttons[button_name].Caption
+	switch Type {
+	case "FORM_SUBMIT":
+		return template.HTML("<input type='submit' value='" + Caption +
+			"'name='" + button_name + "' id='" + button_name + "'  />"), nil
+		break
+	case "FORM_BUTTON":
+		return template.HTML("<input type='button' value='" + Caption +
+			"'name='" + button_name + "' id='" + button_name + "'  />"), nil
 		break
 	}
 

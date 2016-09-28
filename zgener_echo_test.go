@@ -12,7 +12,7 @@ import (
 
 	"github.com/labstack/echo"
 	Engine "github.com/labstack/echo/engine/standard"
-	//	"github.com/labstack/echo/middleware"
+	//"github.com/labstack/echo/middleware"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -88,7 +88,12 @@ type TemplateGenerator struct {
 func (t *TemplateGenerator) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
 	//create object
 	TestObj := Hello{}
-	return t.ZGOBJ.Render(w, name, ZGenerWrapper{Data: TestObj})
+	err := t.ZGOBJ.Render(w, name, ZGenerWrapper{Data: TestObj})
+
+	if err != nil {
+		fmt.Println(`error  = `, err.Error())
+	}
+	return err
 }
 
 /*
@@ -110,7 +115,7 @@ func TestRenderFormFieldsInTemplate_EchoServer(t *testing.T) {
 
 	//load template file (currently just HTML template)
 	//TODO : template must be dynamic, not just HTML template
-	err = WebGenerator.LoadTemplate("TestForm", TEMPLATE_FILE_FIELDS_IN_TEMPLATE)
+	err = WebGenerator.LoadTemplate("TestForm", TEMPLATE_FILE_BUTTONS)
 	if err != nil {
 		t.Error(err)
 	}

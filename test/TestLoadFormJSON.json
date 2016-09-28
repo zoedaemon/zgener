@@ -26,17 +26,17 @@
 	"form-buttons" : {
 		"submit:OnFormInsert" :{
 			"caption" : "Tambah Data",
-			"type" : "submit",
+			"type" : "FORM_SUBMIT",
 			"style" : ".btn-submit" 
 		},
 		"submit:OnFormUpdate" :{
 			"caption" : "Simpan Perubahan",
-			"type" : "submit" 
+			"type" : "FORM_SUBMIT" 
 		},
 		"cancel" : {
 			"caption" : "Batalkan",
 			"style" : ".btn-submit", 
-			"type" : "button",
+			"type" : "FORM_BUTTON",
 			"action":"OnClick:'window.history.back();'"
 		}
 	}

@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	TEMPLATE_FILE_BUTTONS            string = "./test_template/page_view_buttons.html"
 	TEMPLATE_FILE_FIELDS_IN_TEMPLATE string = "./test_template/page_view_fields_in_template.html"
 	TEMPLATE_FILE_WITH_FUNCTION      string = "./test_template/page_view_with_function.html"
 	TEMPLATE_FILE                    string = "./test_template/page_view.html"
@@ -379,15 +380,83 @@ func TestRenderFormFieldsInTemplate(t *testing.T) {
 	string_data = strings.Replace(string_data, `{{ range $key, $value := .ZForm.Fields }}<li><strong>{{ $key }}</strong>: {{ $value.Type }}</li>{{ end }}`,
 		"<li><strong>csrf</strong>: FORM_HIDDEN</li><li><strong>id</strong>: FORM_HIDDEN</li><li><strong>name</strong>: FORM_STRING</li><li><strong>province</strong>: FORM_TEXT</li><li><strong>village</strong>: FORM_TEXT</li>", -1)
 	string_data = strings.Replace(string_data, `{{with .ZFormName}}{{$.ZGener.GenerateField . "id"}}{{$.ZGener.GenerateField . "name"}}{{$.ZGener.GenerateField . "province"}}{{end}}`,
-		"<input type='hidden' name='id' id='id' /><input type='text' name='name' id='name' length='100' /><textarea name='province' id='province'/>Default Value Must Set To zGenField :)</textarea>", -1)
+		"<input type='hidden' name='id' id='id' /><input type='text' name='name' id='name' size='100' /><textarea name='province' id='province'/>Default Value Must Set To zGenField :)</textarea>", -1)
 	string_data = strings.Replace(string_data, `{{ range $key, $value := .ZForm.Fields }}{{with $.ZFormName}}<li><strong>{{(index (index $.ZGener.Forms "TestForm").Fields $key).Caption}}</strong>:{{$.ZGener.GenerateField . $key}}</li>{{end}}{{ end }}`,
-		"<li><strong></strong>:<input type='hidden' name='csrf' id='csrf' /></li><li><strong></strong>:<input type='hidden' name='id' id='id' /></li><li><strong>Name</strong>:<input type='text' name='name' id='name' length='100' /></li><li><strong>Provinsi</strong>:<textarea name='province' id='province'/>Default Value Must Set To zGenField :)</textarea></li><li><strong>Village</strong>:<textarea name='village' id='village'/>Default Value Must Set To zGenField :)</textarea></li>", -1)
+		"<li><strong></strong>:<input type='hidden' name='csrf' id='csrf' /></li><li><strong></strong>:<input type='hidden' name='id' id='id' /></li><li><strong>Name</strong>:<input type='text' name='name' id='name' size='100' /></li><li><strong>Provinsi</strong>:<textarea name='province' id='province'/>Default Value Must Set To zGenField :)</textarea></li><li><strong>Village</strong>:<textarea name='village' id='village'/>Default Value Must Set To zGenField :)</textarea></li>", -1)
 	string_data = strings.Replace(string_data, `{{$_ := .ZFormName}}{{ range $key, $value := $.ZForm.Fields }}<li><strong>{{$.ZGener.Caption $_ $key}}</strong>: {{$.ZGener.GenerateField $_ $key}}</li>{{end}}`,
-		"<li><strong></strong>: <input type='hidden' name='csrf' id='csrf' /></li><li><strong></strong>: <input type='hidden' name='id' id='id' /></li><li><strong>Name</strong>: <input type='text' name='name' id='name' length='100' /></li><li><strong>Provinsi</strong>: <textarea name='province' id='province'/>Default Value Must Set To zGenField :)</textarea></li><li><strong>Village</strong>: <textarea name='village' id='village'/>Default Value Must Set To zGenField :)</textarea></li>", -1)
+		"<li><strong></strong>: <input type='hidden' name='csrf' id='csrf' /></li><li><strong></strong>: <input type='hidden' name='id' id='id' /></li><li><strong>Name</strong>: <input type='text' name='name' id='name' size='100' /></li><li><strong>Provinsi</strong>: <textarea name='province' id='province'/>Default Value Must Set To zGenField :)</textarea></li><li><strong>Village</strong>: <textarea name='village' id='village'/>Default Value Must Set To zGenField :)</textarea></li>", -1)
 
 	boolean := assert.Equal(t, rendered, string_data)
 	if !boolean {
 		t.Error("Unexpected Rendered Result : ", rendered)
 	}
 
+}
+
+//do test
+func TestRenderFormButtons(t *testing.T) {
+
+	fmt.Println(SharedFormatDetail, `Test Form Buttons...`)
+
+	WebGenerator := New()
+	if WebGenerator == nil {
+		t.Errorf("Failed to CREATE new obj !!!")
+	}
+
+	//DONE : Need error handler for next commit
+	err := WebGenerator.LoadForm("TestForm", JSON_FILE)
+	if err != nil {
+		t.Error(err)
+	}
+
+	//load template file
+	err = WebGenerator.LoadTemplate("TestForm", TEMPLATE_FILE_BUTTONS)
+	if err != nil {
+		t.Error(err)
+	}
+
+	//create object
+	//TestObj := Hello{}
+
+	//use this to render to string, but call buffer.String() after this
+	buffer, err := WebGenerator.RenderToBuffer("TestForm", ZGenerWrapper{Data: "Data"})
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	//must be converted to string
+	rendered := buffer.String()
+
+	t.Log(rendered)
+
+	//NOTE :cannot testing strings.Compare(rendered,`<!DOCTYPE html>...
+	//		so we direct open template file and replace {{.}} to expected value
+	data, err := ioutil.ReadFile(TEMPLATE_FILE_BUTTONS)
+	string_data := string(data)
+	//replace template manually for string comparison
+	string_data = strings.Replace(string_data, `{{$_ := .ZFormName}}
+{{ range $key, $value := $.ZForm.Fields }}
+<li><strong>{{$.ZGener.Caption $_ $key}}</strong>: {{$.ZGener.GenerateField $_ $key}}</li>
+{{end}}`,
+		`		
+		
+		
+<li><strong></strong>: <input type='hidden' name='csrf' id='csrf' /></li>
+
+<li><strong></strong>: <input type='hidden' name='id' id='id' /></li>
+
+<li><strong>Name</strong>: <input type='text' name='name' id='name' size='100' /></li>
+
+<li><strong>Provinsi</strong>: <textarea name='province' id='province'/>Default Value Must Set To zGenField :)</textarea></li>
+
+<li><strong>Village</strong>: <textarea name='village' id='village'/>Default Value Must Set To zGenField :)</textarea></li>
+
+`, -1)
+
+	/*	boolean := assert.Equal(t, string_data, rendered)
+		if !boolean {
+			t.Error("Unexpected Rendered Result : ", rendered)
+		}
+	*/
 }
