@@ -11,7 +11,8 @@ import (
 	"html/template"
 	"io"
 	"io/ioutil"
-	"log"
+	//	"log"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -43,6 +44,12 @@ var (
 	Debug bool = false
 )
 
+//TODO : rename from ZGenerDataReader to DataReader, so call from out of package
+//		zgener.DataReader
+type ZGenerDataReader interface {
+	FieldsReader(field_name string, data interface{}) interface{}
+}
+
 /*zgof's fields */
 type ZGener struct {
 	/*key is file name*/
@@ -50,6 +57,7 @@ type ZGener struct {
 	Forms     map[string]*zGenForm
 	Templates map[string]*template.Template
 
+	DataReader ZGenerDataReader
 	/*
 		FUTURE
 	*/
@@ -65,6 +73,7 @@ type zGenForm struct {
 	Buttons map[string]zGenButton `json:"form-buttons"`
 
 	CurrentAction string // [ insert | update ]
+	CurrentData   interface{}
 }
 
 type (
@@ -210,6 +219,7 @@ func (zgeobj *ZGener) Render(w io.Writer, form_name string, data interface{}) er
 	case ZGenerWrapper:
 		Wrapper := data.(ZGenerWrapper)
 		Data = ZGenerWrapper{zgeobj, zgeobj.Forms[form_name], form_name, Wrapper.Data}
+		zgeobj.SetCurrentData(form_name, Wrapper.Data)
 		break
 	default:
 		Data = data
@@ -226,6 +236,7 @@ func (zgeobj *ZGener) RenderToBuffer(form_name string, data interface{}) (*bytes
 	case ZGenerWrapper:
 		Wrapper := data.(ZGenerWrapper)
 		Data = ZGenerWrapper{zgeobj, zgeobj.Forms[form_name], form_name, Wrapper.Data}
+		zgeobj.SetCurrentData(form_name, Wrapper.Data)
 		break
 	default:
 		Data = data
@@ -240,6 +251,13 @@ func (zgeobj *ZGener) GenerateField(form_name string, field_name string) (templa
 	//return (`zgeobj.Forms[form_name].Fields[field_name] = ` +
 	//	zgeobj.Forms[form_name].Fields[field_name].Type)
 	Type := zgeobj.Forms[form_name].Fields[field_name].Type
+	var Data interface{}
+
+	if zgeobj.Forms[form_name].CurrentAction == "update" {
+		//coba ambil data (hasil query misalnya) untuk update mode
+		Data = zgeobj.DataReader.FieldsReader(field_name, zgeobj.Forms[form_name].CurrentData)
+	}
+
 	switch Type {
 	case "FORM_HIDDEN":
 		return template.HTML("<input type='hidden' name='" + field_name +
@@ -247,8 +265,15 @@ func (zgeobj *ZGener) GenerateField(form_name string, field_name string) (templa
 		break
 	case "FORM_STRING":
 		Length := zgeobj.Forms[form_name].Fields[field_name].Length
-		return template.HTML("<input type='text' name='" + field_name + "' id='" +
-			field_name + "' size='" + strconv.FormatUint(uint64(Length), 10) + "' />"), nil
+		Output := "<input type='text' name='" + field_name + "' id='" +
+			field_name + "' size='" + strconv.FormatUint(uint64(Length), 10) + "'"
+		if Data != nil {
+			OutData := fmt.Sprintf("%v", Data)
+			Output = Output + " value='" + OutData + "' />"
+		} else {
+			Output = Output + "/>"
+		}
+		return template.HTML(Output), nil
 		break
 	case "FORM_TEXT":
 		return template.HTML("<textarea name='" + field_name + "' id='" +
@@ -288,8 +313,8 @@ func (zgeobj *ZGener) GenerateButton(form_name string, button_name string) (temp
 			break
 		}
 
-		log.Println("XXXXxxxxxxxxxxxx real_button_name = ", real_button_name)
-		log.Println("XXXXxxxxxxxxxxxx action = ", action)
+		//log.Println("XXXXxxxxxxxxxxxx real_button_name = ", real_button_name)
+		//log.Println("XXXXxxxxxxxxxxxx action = ", action)
 
 		if strings.Compare(action, zgeobj.Forms[form_name].CurrentAction) != 0 {
 			return template.HTML(""), nil
@@ -323,4 +348,18 @@ func (zgeobj *ZGener) Caption(form_name string, field_name string) string {
 func (zgeobj *ZGener) SetCurrentAction(form_name string, action string) {
 	//TODO : lock field for threadsafe ?
 	zgeobj.Forms[form_name].CurrentAction = action
+}
+
+func (zgeobj *ZGener) Type(form_name string, field_name string) string {
+	return zgeobj.Forms[form_name].Fields[field_name].Type
+}
+
+func (zgeobj *ZGener) SetDataReader(data_object ZGenerDataReader) {
+	//TODO : lock field for threadsafe ?
+	zgeobj.DataReader = data_object
+}
+
+func (zgeobj *ZGener) SetCurrentData(form_name string, data_object interface{}) {
+	//TODO : lock field for threadsafe ?
+	zgeobj.Forms[form_name].CurrentData = data_object
 }

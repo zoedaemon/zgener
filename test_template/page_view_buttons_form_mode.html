@@ -4,12 +4,17 @@
 {{- $_ := .ZFormName -}}
 {{- $Z := .ZGener -}}
 {{ range $key, $value := $.ZForm.Fields }}
-	<li><strong>{{$.ZGener.Caption $_ $key}}</strong>: {{$.ZGener.GenerateField $_ $key}}</li>
-{{- end }}
-{{ range $key, $value := $.ZForm.Buttons }}
+	{{- if eq ($Z.Type $_ $key) "FORM_HIDDEN" }}
+		<li>{{$Z.GenerateField $_ $key}}</li>
+	{{- else }}
+		<li><strong>{{$Z.Caption $_ $key}}</strong>: {{$Z.GenerateField $_ $key}}</li>
+	{{- end }}
+{{- end -}}
+
+{{- range $key, $value := $.ZForm.Buttons }}
 	{{- $button := $Z.GenerateButton $_ $key -}}
 	{{ if $button }}
-	<li>{{- $button -}}</li>
+		<li>{{- $button -}}</li>
 	{{- end -}}
 {{- end }}
 </BODY>
