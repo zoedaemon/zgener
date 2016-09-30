@@ -88,6 +88,11 @@ type TemplateGenerator struct {
 func (t *TemplateGenerator) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
 	//create object
 	TestObj := Hello{}
+
+	//TODO : get echo.context path or url parameter for action
+	t.ZGOBJ.SetCurrentAction(name, "insert")
+
+	//render
 	err := t.ZGOBJ.Render(w, name, ZGenerWrapper{Data: TestObj})
 
 	if err != nil {

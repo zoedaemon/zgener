@@ -1,16 +1,7 @@
 <!DOCTYPE html>
 <HTML>
 <BODY> 
-{{$_ := .ZFormName}}
-{{$Z := .ZGener}}
-
-{{ range $key, $value := $.ZForm.Fields }}
-	<li><strong>{{$.ZGener.Caption $_ $key}}</strong>: {{$.ZGener.GenerateField $_ $key}}</li>
-{{end}}
-
-{{ range $key, $value := $.ZForm.Buttons }}
-	<li><strong>{{$Z.Caption $_ $key}}</strong>: {{$Z.GenerateButton $_ $key}}</li>
-{{end}}
-
+{{$_ := .ZFormName}}{{$Z := .ZGener}}{{ range $key, $value := $.ZForm.Fields }}<li><strong>{{$.ZGener.Caption $_ $key}}</strong>: {{$.ZGener.GenerateField $_ $key}}</li>{{end}}
+{{ range $key, $value := $.ZForm.Buttons }}<li>{{$Z.GenerateButton $_ $key}}</li>{{end}}
 </BODY>
 </HTML>

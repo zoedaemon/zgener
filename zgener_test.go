@@ -15,6 +15,7 @@ import (
 )
 
 const (
+	TEMPLATE_FILE_BUTTONS_FORM_MODE  string = "./test_template/page_view_buttons_form_mode.html"
 	TEMPLATE_FILE_BUTTONS            string = "./test_template/page_view_buttons.html"
 	TEMPLATE_FILE_FIELDS_IN_TEMPLATE string = "./test_template/page_view_fields_in_template.html"
 	TEMPLATE_FILE_WITH_FUNCTION      string = "./test_template/page_view_with_function.html"
@@ -262,6 +263,7 @@ func TestRenderFormJSON(t *testing.T) {
 
 //this object pass to template
 type Hello struct {
+	FakeDB map[string]string
 }
 
 //function to call
@@ -415,11 +417,83 @@ func TestRenderFormButtons(t *testing.T) {
 		t.Error(err)
 	}
 
-	//create object
-	//TestObj := Hello{}
-
+	//set form mode
+	WebGenerator.SetCurrentAction("TestForm", "insert")
 	//use this to render to string, but call buffer.String() after this
-	buffer, err := WebGenerator.RenderToBuffer("TestForm", ZGenerWrapper{Data: "Data"})
+	buffer, err := WebGenerator.RenderToBuffer("TestForm", ZGenerWrapper{Data: nil})
+
+	if err != nil {
+		t.Error(err)
+	}
+
+	//must be converted to string
+	rendered := buffer.String()
+
+	//coba tampilkan outputnya
+	if TEST_SHOW_OUTPUT_DATA {
+		t.Log(rendered)
+	}
+
+	//NOTE :cannot testing strings.Compare(rendered,`<!DOCTYPE html>...
+	//		so we direct open template file and replace {{.}} to expected value
+	data, err := ioutil.ReadFile(TEMPLATE_FILE_BUTTONS)
+	string_data := string(data)
+	//replace template manually for string comparison
+	string_data = strings.Replace(string_data, `{{$_ := .ZFormName}}{{$Z := .ZGener}}{{ range $key, $value := $.ZForm.Fields }}<li><strong>{{$.ZGener.Caption $_ $key}}</strong>: {{$.ZGener.GenerateField $_ $key}}</li>{{end}}`,
+		`<li><strong></strong>: <input type='hidden' name='csrf' id='csrf' /></li><li><strong></strong>: <input type='hidden' name='id' id='id' /></li><li><strong>Name</strong>: <input type='text' name='name' id='name' size='100' /></li><li><strong>Provinsi</strong>: <textarea name='province' id='province'/>Default Value Must Set To zGenField :)</textarea></li><li><strong>Village</strong>: <textarea name='village' id='village'/>Default Value Must Set To zGenField :)</textarea></li>`,
+		-1)
+	string_data = strings.Replace(string_data, `{{ range $key, $value := $.ZForm.Buttons }}<li>{{$Z.GenerateButton $_ $key}}</li>{{end}}`,
+		`<li><input type='button' value='Batalkan'name='cancel' id='cancel'  /></li><li><input type='submit' value='Tambah Data'name='submit' id='submit'  /></li><li></li>`,
+		-1)
+
+	//TODO : compare multiline not success :(
+	boolean := assert.Equal(t, string_data, rendered)
+	if !boolean {
+		t.Error("Unexpected Rendered Result : ", rendered)
+	}
+
+}
+
+///////////////////////////
+type HelloWrapper struct {
+	DataHello Hello
+}
+
+//function to call when form on insert mode
+func (self HelloWrapper) SetOnInsert(field_name string) interface{} {
+	return nil
+}
+
+//function to call when form on update mode
+func (self HelloWrapper) SetOnUpdate(field_name string) interface{} {
+	return self.DataHello.FakeDB[field_name]
+}
+
+func TestRenderFormButtonsFormMode(t *testing.T) {
+
+	fmt.Println(SharedFormatDetail, `Test Form Buttons With Form Mode == UPDATE`)
+
+	WebGenerator := New()
+	if WebGenerator == nil {
+		t.Errorf("Failed to CREATE new obj !!!")
+	}
+
+	//DONE : Need error handler for next commit
+	err := WebGenerator.LoadForm("TestForm", JSON_FILE)
+	if err != nil {
+		t.Error(err)
+	}
+
+	//load template file
+	err = WebGenerator.LoadTemplate("TestForm", TEMPLATE_FILE_BUTTONS_FORM_MODE)
+	if err != nil {
+		t.Error(err)
+	}
+
+	//set form mode
+	WebGenerator.SetCurrentAction("TestForm", "update")
+	//use this to render to string, but call buffer.String() after this
+	buffer, err := WebGenerator.RenderToBuffer("TestForm", ZGenerWrapper{Data: nil})
 
 	if err != nil {
 		t.Error(err)
@@ -432,31 +506,22 @@ func TestRenderFormButtons(t *testing.T) {
 
 	//NOTE :cannot testing strings.Compare(rendered,`<!DOCTYPE html>...
 	//		so we direct open template file and replace {{.}} to expected value
-	data, err := ioutil.ReadFile(TEMPLATE_FILE_BUTTONS)
+	data, err := ioutil.ReadFile(TEMPLATE_FILE_BUTTONS_FORM_MODE)
 	string_data := string(data)
 	//replace template manually for string comparison
-	string_data = strings.Replace(string_data, `{{$_ := .ZFormName}}
-{{ range $key, $value := $.ZForm.Fields }}
-<li><strong>{{$.ZGener.Caption $_ $key}}</strong>: {{$.ZGener.GenerateField $_ $key}}</li>
-{{end}}`,
-		`		
-		
-		
-<li><strong></strong>: <input type='hidden' name='csrf' id='csrf' /></li>
+	string_data = strings.Replace(string_data, `{{$_ := .ZFormName}}{{$Z := .ZGener}}{{ range $key, $value := $.ZForm.Fields }}<li><strong>{{$.ZGener.Caption $_ $key}}</strong>: {{$.ZGener.GenerateField $_ $key}}</li>{{end}}`,
+		`<li><strong></strong>: <input type='hidden' name='csrf' id='csrf' /></li><li><strong></strong>: <input type='hidden' name='id' id='id' /></li><li><strong>Name</strong>: <input type='text' name='name' id='name' size='100' /></li><li><strong>Provinsi</strong>: <textarea name='province' id='province'/>Default Value Must Set To zGenField :)</textarea></li><li><strong>Village</strong>: <textarea name='village' id='village'/>Default Value Must Set To zGenField :)</textarea></li>`,
+		-1)
+	string_data = strings.Replace(string_data, `{{ range $key, $value := $.ZForm.Buttons }}<li><strong>{{$Z.Caption $_ $key}}</strong>: {{$Z.GenerateButton $_ $key}}</li>{{end}}`,
+		`<li><strong></strong>: <input type='button' value='Batalkan'name='cancel' id='cancel'  /></li><li><strong></strong>: <input type='submit' value='Tambah Data'name='submit:OnFormInsert' id='submit:OnFormInsert'  /></li><li><strong></strong>: <input type='submit' value='Simpan Perubahan'name='submit:OnFormUpdate' id='submit:OnFormUpdate'  /></li>`,
+		-1)
 
-<li><strong></strong>: <input type='hidden' name='id' id='id' /></li>
-
-<li><strong>Name</strong>: <input type='text' name='name' id='name' size='100' /></li>
-
-<li><strong>Provinsi</strong>: <textarea name='province' id='province'/>Default Value Must Set To zGenField :)</textarea></li>
-
-<li><strong>Village</strong>: <textarea name='village' id='village'/>Default Value Must Set To zGenField :)</textarea></li>
-
-`, -1)
-
-	/*	boolean := assert.Equal(t, string_data, rendered)
+	//TODO : compare multiline not success :(
+	/*
+		boolean := assert.Equal(t, string_data, rendered)
 		if !boolean {
 			t.Error("Unexpected Rendered Result : ", rendered)
 		}
 	*/
+
 }

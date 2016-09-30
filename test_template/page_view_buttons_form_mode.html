@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<HTML>
+<BODY> 
+{{- $_ := .ZFormName -}}
+{{- $Z := .ZGener -}}
+{{ range $key, $value := $.ZForm.Fields }}
+	<li><strong>{{$.ZGener.Caption $_ $key}}</strong>: {{$.ZGener.GenerateField $_ $key}}</li>
+{{- end }}
+{{ range $key, $value := $.ZForm.Buttons }}
+	{{- $button := $Z.GenerateButton $_ $key -}}
+	{{ if $button }}
+	<li>{{- $button -}}</li>
+	{{- end -}}
+{{- end }}
+</BODY>
+</HTML>

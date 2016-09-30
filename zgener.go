@@ -11,8 +11,10 @@ import (
 	"html/template"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -61,6 +63,8 @@ type zGenForm struct {
 
 	Actions zGenAction
 	Buttons map[string]zGenButton `json:"form-buttons"`
+
+	CurrentAction string // [ insert | update ]
 }
 
 type (
@@ -257,25 +261,66 @@ func (zgeobj *ZGener) GenerateField(form_name string, field_name string) (templa
 }
 
 func (zgeobj *ZGener) GenerateButton(form_name string, button_name string) (template.HTML, error) {
-	//return (`zgeobj.Forms[form_name].Fields[field_name] = ` +
-	//	zgeobj.Forms[form_name].Fields[field_name].Type)
+	var real_button_name string
+	var action string
+	var pass_check_function bool
+	//check button with action separator button:actionname
+	i := strings.Index(button_name, ":")
+	if i > -1 {
+		real_button_name = button_name[:i]
+		action = button_name[i+1:]
+		pass_check_function = false
+	} else {
+		real_button_name = button_name
+		pass_check_function = true
+	}
+
+	if !pass_check_function {
+		switch action {
+		case "OnFormInsert":
+			action = "insert"
+			break
+		case "OnFormUpdate":
+			action = "update"
+			break
+		default:
+			return "", errors.New("Invalid :action name :" + action)
+			break
+		}
+
+		log.Println("XXXXxxxxxxxxxxxx real_button_name = ", real_button_name)
+		log.Println("XXXXxxxxxxxxxxxx action = ", action)
+
+		if strings.Compare(action, zgeobj.Forms[form_name].CurrentAction) != 0 {
+			return template.HTML(""), nil
+		}
+
+	}
+
 	Type := zgeobj.Forms[form_name].Buttons[button_name].Type
 	Caption := zgeobj.Forms[form_name].Buttons[button_name].Caption
 	switch Type {
 	case "FORM_SUBMIT":
 		return template.HTML("<input type='submit' value='" + Caption +
-			"'name='" + button_name + "' id='" + button_name + "'  />"), nil
+			"'name='" + real_button_name + "' id='" + real_button_name + "'  />"), nil
 		break
 	case "FORM_BUTTON":
 		return template.HTML("<input type='button' value='" + Caption +
-			"'name='" + button_name + "' id='" + button_name + "'  />"), nil
+			"'name='" + real_button_name + "' id='" + real_button_name + "'  />"), nil
 		break
 	}
-
 	//execution will be panic if non nil return value sent
 	return "", errors.New("<< ZGener ERROR : Invalid Field Type !!!>>") //TODO : error handle in template ???
 }
 
 func (zgeobj *ZGener) Caption(form_name string, field_name string) string {
 	return zgeobj.Forms[form_name].Fields[field_name].Caption
+}
+
+/*
+	action : [ "insert" | "update" ]
+*/
+func (zgeobj *ZGener) SetCurrentAction(form_name string, action string) {
+	//TODO : lock field for threadsafe ?
+	zgeobj.Forms[form_name].CurrentAction = action
 }
