@@ -1,0 +1,472 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">zgener\zgener.go (87.2%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">/*
+zgener or zgenerator, simple html component generator, which is generate data
+from json files
+*/
+package zgener
+
+import (
+        "bytes"
+        "encoding/json"
+        "errors"
+        "html/template"
+        "io"
+        "io/ioutil"
+        //        "log"
+        "fmt"
+        "os"
+        "strconv"
+        "strings"
+)
+
+const (
+        RELATIVE_PATH         bool = true //not yet used
+        TEST_SHOW_OUTPUT_DATA bool = true //no data to print while test process
+)
+
+const (
+        FORM_BOOL   = iota
+        FORM_INT    = iota
+        FORM_STRING = iota
+        FORM_TEXT   = iota
+        FORM_HIDDEN = iota
+        FORM_SELECT = iota
+        FORM_SUBMIT = iota
+        FORM_BUTTON = iota
+)
+
+const (
+        PRINTFORM_FIELD_TYPE    string = "---- Forms[%s].Fields[name].Type : %s"
+        PRINTFORM_FIELD_LENGTH  string = "---- Forms[%s].Fields[name].Length : %s"
+        PRINTFORM_FIELD_CAPTION string = "---- Forms[%s].Fields[name].Caption : %s"
+)
+
+var (
+        Debug bool = false
+)
+
+//TODO : rename from ZGenerDataReader to DataReader, so call from out of package
+//                zgener.DataReader
+type ZGenerDataReader interface {
+        FieldsReader(field_name string, data interface{}) interface{}
+}
+
+/*zgof's fields */
+type ZGener struct {
+        /*key is file name*/
+        RawForms  map[string]string
+        Forms     map[string]*zGenForm
+        Templates map[string]*template.Template
+
+        DataReader ZGenerDataReader
+        /*
+                FUTURE
+        */
+        //Scheme map[string]*zGenScheme
+        //Tables map[string]*zGenTable
+}
+
+type zGenForm struct {
+        FormName string               `json:"form-name"`
+        Fields   map[string]zGenField `json:"form-fields"`
+
+        Actions zGenAction
+        Buttons map[string]zGenButton `json:"form-buttons"`
+
+        CurrentAction string // [ insert | update ]
+        CurrentData   interface{}
+}
+
+type (
+        zGenField struct {
+                Type    string `json:"type"`
+                Length  uint16 `json:"length"`
+                Caption string `json:"caption"`
+                /*
+                        FUTURE
+                */
+                //LinkToScheme *zGenScheme
+        }
+
+        zGenAction struct {
+        }
+
+        zGenButton struct {
+                Type    string `json:"type"`
+                Caption string `json:"caption"`
+                Style   string `json:"style"`
+                Action  string `json:"action"`
+        }
+)
+
+type ZGenerWrapper struct {
+        ZGener    interface{}
+        ZForm     interface{} //Obj Form saat ini :)
+        ZFormName string      //Nama form saat ini
+        Data      interface{}
+
+        //TODO : PROPOSAL : [ insert | update ]
+        //OnFormAction interface{}
+}
+
+//pointer to function
+type (
+        LogPrintForm       func(string, ...interface{})
+        LogPrintFormToFile func(io.Writer, string, ...interface{}) (int, error)
+)
+
+/*create new instance of zgof*/
+func New() *ZGener <span class="cov8" title="1">{
+        Obj := new(ZGener)
+        Obj.Forms = make(map[string]*zGenForm)
+        Obj.Templates = make(map[string]*template.Template)
+        return Obj
+}</span>
+
+func (zgeobj *ZGener) LoadForm(form_name string, file string) error <span class="cov8" title="1">{
+
+        //object form that hold data from json file
+        var NewForm *zGenForm
+
+        content, err := ioutil.ReadFile(file)
+        if err != nil </span><span class="cov0" title="0">{
+                return errors.New("error opening file : " + err.Error())
+        }</span>
+
+        <span class="cov8" title="1">err = json.Unmarshal(content, &amp;NewForm)
+        if err != nil </span><span class="cov0" title="0">{
+                return errors.New("error unmarshall json file : " + err.Error())
+        }</span>
+
+        //set new form
+        <span class="cov8" title="1">zgeobj.Forms[form_name] = NewForm
+        //default action is insert mode
+        zgeobj.Forms[form_name].CurrentAction = "insert"
+
+        return nil</span>
+}
+
+func (zgeobj *ZGener) GetForm(form_name string) *zGenForm <span class="cov8" title="1">{
+        return zgeobj.Forms[form_name]
+}</span>
+
+func (zgeobj *ZGener) PrintForm(form_name string, print_func LogPrintForm) <span class="cov8" title="1">{
+        for _, val := range zgeobj.Forms[form_name].Fields </span><span class="cov8" title="1">{
+                if len(val.Type) &gt; 0 </span><span class="cov8" title="1">{
+                        print_func(PRINTFORM_FIELD_TYPE, form_name, val.Type)
+                }</span>
+                <span class="cov8" title="1">if val.Length &gt; 0 </span><span class="cov8" title="1">{
+                        print_func(PRINTFORM_FIELD_LENGTH, form_name, val.Length)
+                }</span>
+                <span class="cov8" title="1">if len(val.Caption) &gt; 0 </span><span class="cov8" title="1">{
+                        print_func(PRINTFORM_FIELD_CAPTION, form_name, val.Caption)
+                }</span>
+                <span class="cov8" title="1">print_func("-----------")</span>
+        }
+}
+
+func (zgeobj *ZGener) PrintFormToFile(form_name string, print_func LogPrintFormToFile, f io.Writer) <span class="cov8" title="1">{
+        for _, val := range zgeobj.Forms[form_name].Fields </span><span class="cov8" title="1">{
+                if len(val.Type) &gt; 0 </span><span class="cov8" title="1">{
+                        print_func(f, PRINTFORM_FIELD_TYPE+"\n", form_name, val.Type)
+                }</span>
+                <span class="cov8" title="1">if val.Length &gt; 0 </span><span class="cov8" title="1">{
+                        print_func(f, PRINTFORM_FIELD_LENGTH+"\n", form_name, val.Length)
+                }</span>
+                <span class="cov8" title="1">if len(val.Caption) &gt; 0 </span><span class="cov8" title="1">{
+                        print_func(f, PRINTFORM_FIELD_CAPTION+"\n", form_name, val.Caption)
+                }</span>
+                <span class="cov8" title="1">print_func(f, "-----------\n")</span>
+        }
+}
+
+func defaultPrint(s string) string <span class="cov8" title="1">{
+
+        return ("This From Default Print " + s)
+}</span>
+
+func (zgeobj *ZGener) LoadTemplate(form_name string, file string) error <span class="cov8" title="1">{
+
+        if _, err := os.Stat(file); err != nil </span><span class="cov0" title="0">{
+                if os.IsNotExist(err) </span><span class="cov0" title="0">{
+                        return errors.New("file not exist")
+                }</span><span class="cov0" title="0"> else {
+                        return errors.New("error opening file : " + err.Error())
+                }</span>
+        }
+
+        //load template data
+        <span class="cov8" title="1">dat, err := ioutil.ReadFile(file)
+        //cek error
+        if err != nil </span><span class="cov0" title="0">{
+                return errors.New("error opening file : " + err.Error())
+        }</span>
+
+        <span class="cov8" title="1">tmpl := template.New(form_name) //.Delims("{**", "**}")
+
+        //set default function
+        tmpl.Funcs(template.FuncMap{"default_print": defaultPrint})
+
+        zgeobj.Templates[form_name], err = tmpl.Parse(string(dat))
+        if err != nil </span><span class="cov0" title="0">{
+                return errors.New("error parse template : " + err.Error())
+        }</span>
+
+        //fmt.Println(string(dat))
+        <span class="cov8" title="1">return nil</span>
+}
+
+//TODO : template_name dan form_name bisa dipisah untuk penggunaan 1 form untuk beberapa template
+func (zgeobj *ZGener) Render(w io.Writer, form_name string, data interface{}) error <span class="cov8" title="1">{
+        //ExecuteTemplate(w, name, data)
+        var Data interface{}
+        switch data.(type) </span>{
+        <span class="cov8" title="1">case ZGenerWrapper:
+                Wrapper := data.(ZGenerWrapper)
+                Data = ZGenerWrapper{zgeobj, zgeobj.Forms[form_name], form_name, Wrapper.Data}
+                zgeobj.SetCurrentData(form_name, Wrapper.Data)
+                break</span>
+        <span class="cov8" title="1">default:
+                Data = data
+                break</span>
+        }
+        <span class="cov8" title="1">err := zgeobj.Templates[form_name].Execute(w, Data)
+        return err</span>
+}
+
+func (zgeobj *ZGener) RenderToBuffer(form_name string, data interface{}) (*bytes.Buffer,
+        error) <span class="cov8" title="1">{
+        var Data interface{}
+        switch data.(type) </span>{
+        <span class="cov8" title="1">case ZGenerWrapper:
+                Wrapper := data.(ZGenerWrapper)
+                Data = ZGenerWrapper{zgeobj, zgeobj.Forms[form_name], form_name, Wrapper.Data}
+                zgeobj.SetCurrentData(form_name, Wrapper.Data)
+                break</span>
+        <span class="cov8" title="1">default:
+                Data = data
+                break</span>
+        }
+        <span class="cov8" title="1">var buff *bytes.Buffer = new(bytes.Buffer)
+        err := zgeobj.Templates[form_name].Execute(buff, Data)
+        return buff, err</span>
+}
+
+func (zgeobj *ZGener) GenerateField(form_name string, field_name string) (template.HTML, error) <span class="cov8" title="1">{
+        //return (`zgeobj.Forms[form_name].Fields[field_name] = ` +
+        //        zgeobj.Forms[form_name].Fields[field_name].Type)
+        Type := zgeobj.Forms[form_name].Fields[field_name].Type
+        var Data interface{}
+
+        if zgeobj.Forms[form_name].CurrentAction == "update" &amp;&amp;
+                zgeobj.DataReader != nil </span><span class="cov0" title="0">{
+                //coba ambil data (hasil query misalnya) untuk update mode
+                Data = zgeobj.DataReader.FieldsReader(field_name, zgeobj.Forms[form_name].CurrentData)
+        }</span>
+
+        <span class="cov8" title="1">switch Type </span>{
+        <span class="cov8" title="1">case "FORM_HIDDEN":
+                return template.HTML("&lt;input type='hidden' name='" + field_name +
+                        "' id='" + field_name + "' /&gt;"), nil
+                break</span>
+        <span class="cov8" title="1">case "FORM_STRING":
+                Length := zgeobj.Forms[form_name].Fields[field_name].Length
+                Output := "&lt;input type='text' name='" + field_name + "' id='" +
+                        field_name + "' size='" + strconv.FormatUint(uint64(Length), 10) + "'"
+                if Data != nil </span><span class="cov0" title="0">{
+                        OutData := fmt.Sprintf("%v", Data)
+                        Output = Output + " value='" + OutData + "' /&gt;"
+                }</span><span class="cov8" title="1"> else {
+                        Output = Output + "/&gt;"
+                }</span>
+                <span class="cov8" title="1">return template.HTML(Output), nil
+                break</span>
+        <span class="cov8" title="1">case "FORM_TEXT":
+                return template.HTML("&lt;textarea name='" + field_name + "' id='" +
+                        field_name + "'/&gt;Default Value Must Set To zGenField :)&lt;/textarea&gt;"), nil
+                break</span>
+        }
+
+        //execution will be panic if non nil return value sent
+        <span class="cov0" title="0">return "", errors.New("&lt;&lt; ZGener ERROR : Invalid Field Type !!!&gt;&gt;")</span> //TODO : error handle in template ???
+}
+
+func (zgeobj *ZGener) GenerateButton(form_name string, button_name string) (template.HTML, error) <span class="cov8" title="1">{
+        var real_button_name string
+        var action string
+        var pass_check_function bool
+        //check button with action separator button:actionname
+        i := strings.Index(button_name, ":")
+        if i &gt; -1 </span><span class="cov8" title="1">{
+                real_button_name = button_name[:i]
+                action = button_name[i+1:]
+                pass_check_function = false
+        }</span><span class="cov8" title="1"> else {
+                real_button_name = button_name
+                pass_check_function = true
+        }</span>
+
+        <span class="cov8" title="1">if !pass_check_function </span><span class="cov8" title="1">{
+                switch action </span>{
+                <span class="cov8" title="1">case "OnFormInsert":
+                        action = "insert"
+                        break</span>
+                <span class="cov8" title="1">case "OnFormUpdate":
+                        action = "update"
+                        break</span>
+                <span class="cov0" title="0">default:
+                        return "", errors.New("Invalid :action name :" + action)
+                        break</span>
+                }
+
+                //log.Println("XXXXxxxxxxxxxxxx real_button_name = ", real_button_name)
+                //log.Println("XXXXxxxxxxxxxxxx action = ", action)
+
+                <span class="cov8" title="1">if strings.Compare(action, zgeobj.Forms[form_name].CurrentAction) != 0 </span><span class="cov8" title="1">{
+                        return template.HTML(""), nil
+                }</span>
+
+        }
+
+        <span class="cov8" title="1">Type := zgeobj.Forms[form_name].Buttons[button_name].Type
+        Caption := zgeobj.Forms[form_name].Buttons[button_name].Caption
+        switch Type </span>{
+        <span class="cov8" title="1">case "FORM_SUBMIT":
+                return template.HTML("&lt;input type='submit' value='" + Caption +
+                        "'name='" + real_button_name + "' id='" + real_button_name + "'  /&gt;"), nil
+                break</span>
+        <span class="cov8" title="1">case "FORM_BUTTON":
+                return template.HTML("&lt;input type='button' value='" + Caption +
+                        "'name='" + real_button_name + "' id='" + real_button_name + "'  /&gt;"), nil
+                break</span>
+        }
+        //execution will be panic if non nil return value sent
+        <span class="cov0" title="0">return "", errors.New("&lt;&lt; ZGener ERROR : Invalid Field Type !!!&gt;&gt;")</span> //TODO : error handle in template ???
+}
+
+func (zgeobj *ZGener) Caption(form_name string, field_name string) string <span class="cov8" title="1">{
+        return zgeobj.Forms[form_name].Fields[field_name].Caption
+}</span>
+
+/*
+        action : [ "insert" | "update" ]
+*/
+func (zgeobj *ZGener) SetCurrentAction(form_name string, action string) <span class="cov8" title="1">{
+        //TODO : lock field for threadsafe ?
+        zgeobj.Forms[form_name].CurrentAction = action
+}</span>
+
+func (zgeobj *ZGener) Type(form_name string, field_name string) string <span class="cov8" title="1">{
+        return zgeobj.Forms[form_name].Fields[field_name].Type
+}</span>
+
+func (zgeobj *ZGener) SetDataReader(data_object ZGenerDataReader) <span class="cov0" title="0">{
+        //TODO : lock field for threadsafe ?
+        zgeobj.DataReader = data_object
+}</span>
+
+func (zgeobj *ZGener) SetCurrentData(form_name string, data_object interface{}) <span class="cov8" title="1">{
+        //TODO : lock field for threadsafe ?
+        zgeobj.Forms[form_name].CurrentData = data_object
+}</span>
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

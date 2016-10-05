@@ -137,7 +137,11 @@ func (zgeobj *ZGener) LoadForm(form_name string, file string) error {
 		return errors.New("error unmarshall json file : " + err.Error())
 	}
 
+	//set new form
 	zgeobj.Forms[form_name] = NewForm
+	//default action is insert mode
+	zgeobj.Forms[form_name].CurrentAction = "insert"
+
 	return nil
 }
 
@@ -253,7 +257,8 @@ func (zgeobj *ZGener) GenerateField(form_name string, field_name string) (templa
 	Type := zgeobj.Forms[form_name].Fields[field_name].Type
 	var Data interface{}
 
-	if zgeobj.Forms[form_name].CurrentAction == "update" {
+	if zgeobj.Forms[form_name].CurrentAction == "update" &&
+		zgeobj.DataReader != nil {
 		//coba ambil data (hasil query misalnya) untuk update mode
 		Data = zgeobj.DataReader.FieldsReader(field_name, zgeobj.Forms[form_name].CurrentData)
 	}
@@ -362,4 +367,16 @@ func (zgeobj *ZGener) SetDataReader(data_object ZGenerDataReader) {
 func (zgeobj *ZGener) SetCurrentData(form_name string, data_object interface{}) {
 	//TODO : lock field for threadsafe ?
 	zgeobj.Forms[form_name].CurrentData = data_object
+}
+
+func (zgeobj *ZGener) FormBegin() (template.HTML, error) {
+	//execution will be panic if non nil return value sent
+	//return "", errors.New("<< ZGener ERROR : Invalid Field Type !!!>>") //TODO : error handle in template ???
+	return template.HTML("<form action='test' name='form-bla'>"), nil
+}
+
+func (zgeobj *ZGener) FormEnd() (template.HTML, error) {
+	//execution will be panic if non nil return value sent
+	//return "", errors.New("<< ZGener ERROR : Invalid Field Type !!!>>") //TODO : error handle in template ???
+	return template.HTML("</form>"), nil
 }
