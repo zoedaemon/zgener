@@ -271,6 +271,11 @@ func (self Hello) Print(s string) string {
 	return "Hello " + s
 }
 
+//function to call
+func (self *Hello) Init() {
+	self.FakeDB = make(map[string]string)
+}
+
 //do test
 func TestRenderFormWithFunction(t *testing.T) {
 
@@ -469,6 +474,12 @@ func (self HelloWrapper) SetOnUpdate(field_name string) interface{} {
 	return self.DataHello.FakeDB[field_name]
 }
 
+func (self *HelloWrapper) FieldsReader(field_name string, data interface{}) interface{} {
+	//	log.Printf("data.(map[string]interface{})[field_name] : %v",
+	//	data.(map[string]interface{})[field_name])
+	return data.(Hello).FakeDB[field_name]
+}
+
 func TestRenderFormButtonsFormMode(t *testing.T) {
 
 	fmt.Println(SharedFormatDetail, `10) Test Form Buttons With Form Mode == UPDATE`)
@@ -495,8 +506,18 @@ func TestRenderFormButtonsFormMode(t *testing.T) {
 
 	//set form mode
 	WebGenerator.SetCurrentAction("TestForm", "update")
+
+	//data simulasi
+	HelloObj := Hello{}
+	HelloObj.Init()
+	//HelloObj.FakeDB = make(map[string]string)
+	HelloObj.FakeDB["name"] = "Palangka Raya"
+	HelloObj.FakeDB["province"] = "Kalimantan Tengah (Central Borneo), Indonesia"
+	//set data reader, kelas yang memiliki fungsi FieldsReader
+	WebGenerator.SetDataReader(&HelloWrapper{HelloObj})
+
 	//use this to render to string, but call buffer.String() after this
-	buffer, err := WebGenerator.RenderToBuffer("TestForm", ZGenerWrapper{Data: nil})
+	buffer, err := WebGenerator.RenderToBuffer("TestForm", ZGenerWrapper{Data: HelloObj})
 
 	if err != nil {
 		t.Error(err)

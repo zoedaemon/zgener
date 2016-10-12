@@ -281,8 +281,16 @@ func (zgeobj *ZGener) GenerateField(form_name string, field_name string) (templa
 		return template.HTML(Output), nil
 		break
 	case "FORM_TEXT":
-		return template.HTML("<textarea name='" + field_name + "' id='" +
-			field_name + "'/>Default Value Must Set To zGenField :)</textarea>"), nil
+		Output := "<textarea name='" + field_name + "' id='" +
+			field_name + "'/>"
+		if Data != nil {
+			OutData := fmt.Sprintf("%v", Data)
+			Output = Output + OutData
+		}
+
+		Output = Output + "</textarea>"
+
+		return template.HTML(Output), nil
 		break
 	}
 
