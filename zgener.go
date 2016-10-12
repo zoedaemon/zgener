@@ -66,11 +66,14 @@ type ZGener struct {
 }
 
 type zGenForm struct {
-	FormName string               `json:"form-name"`
-	Fields   map[string]zGenField `json:"form-fields"`
-
-	Actions zGenAction
-	Buttons map[string]zGenButton `json:"form-buttons"`
+	FormName    string                `json:"form-name"`
+	FormCaption string                `json:"form-caption"`
+	FormType    string                `json:"form-type"`
+	FormMethod  string                `json:"form-method"`
+	FormTarget  string                `json:"form-target"`
+	Fields      map[string]zGenField  `json:"form-fields"`
+	Actions     zGenAction            `json:"form-actions"`
+	Buttons     map[string]zGenButton `json:"form-buttons"`
 
 	CurrentAction string // [ insert | update ]
 	CurrentData   interface{}
@@ -88,6 +91,11 @@ type (
 	}
 
 	zGenAction struct {
+		InsertCaption string `json:"insert-caption"`
+		InsertPath    string `json:"insert-path"`
+
+		UpdateCaption string `json:"update-caption"`
+		UpdatePath    string `json:"update-path"`
 	}
 
 	zGenButton struct {
@@ -265,8 +273,18 @@ func (zgeobj *ZGener) GenerateField(form_name string, field_name string) (templa
 
 	switch Type {
 	case "FORM_HIDDEN":
-		return template.HTML("<input type='hidden' name='" + field_name +
-			"' id='" + field_name + "' />"), nil
+		Output := "<input type='hidden' name='" + field_name +
+			"' id='" + field_name + "' "
+
+		if Data != nil {
+			OutData := fmt.Sprintf("%v", Data)
+			Output = Output + " value='" + OutData + "'"
+		}
+
+		Output = Output + "/>"
+
+		return template.HTML(Output), nil
+
 		break
 	case "FORM_STRING":
 		Length := zgeobj.Forms[form_name].Fields[field_name].Length
@@ -377,14 +395,48 @@ func (zgeobj *ZGener) SetCurrentData(form_name string, data_object interface{}) 
 	zgeobj.Forms[form_name].CurrentData = data_object
 }
 
-func (zgeobj *ZGener) FormBegin() (template.HTML, error) {
+func (zgeobj *ZGener) FormBegin(form_name string) (template.HTML, error) {
 	//execution will be panic if non nil return value sent
 	//return "", errors.New("<< ZGener ERROR : Invalid Field Type !!!>>") //TODO : error handle in template ???
-	return template.HTML("<form action='test' name='form-bla'>"), nil
+	Output := "<form  "
+	Output = Output + "name='" + zgeobj.Forms[form_name].FormName + "' "
+	Output = Output + "id='" + zgeobj.Forms[form_name].FormName + "' "
+	Output = Output + "enctype='" + zgeobj.Forms[form_name].FormType + "' "
+	Output = Output + "method='" + zgeobj.Forms[form_name].FormMethod + "' "
+	Output = Output + "target='" + zgeobj.Forms[form_name].FormTarget + "' "
+
+	Output = Output + "action='"
+	if zgeobj.Forms[form_name].CurrentAction == "update" {
+		Output = Output + zgeobj.Forms[form_name].Actions.UpdatePath
+	} else if zgeobj.Forms[form_name].CurrentAction == "insert" {
+		Output = Output + zgeobj.Forms[form_name].Actions.InsertPath
+	} else {
+		return template.HTML(""), errors.New("ZGener : Invalid Form Action")
+	}
+
+	Output = Output + "' "
+	Output = Output + " >"
+	return template.HTML(Output), nil
 }
 
 func (zgeobj *ZGener) FormEnd() (template.HTML, error) {
-	//execution will be panic if non nil return value sent
-	//return "", errors.New("<< ZGener ERROR : Invalid Field Type !!!>>") //TODO : error handle in template ???
 	return template.HTML("</form>"), nil
+}
+
+func (zgeobj *ZGener) FormCaption(form_name string) (string, error) {
+	return zgeobj.Forms[form_name].FormCaption, nil
+}
+
+func (zgeobj *ZGener) ActionCaption(form_name string) (string, error) {
+
+	if zgeobj.Forms[form_name].CurrentAction == "update" {
+		return zgeobj.Forms[form_name].Actions.UpdateCaption, nil
+	}
+
+	return zgeobj.Forms[form_name].Actions.InsertCaption, nil
+}
+
+func (zgeobj *ZGener) GetCurrentAction(form_name string) string {
+	//TODO : lock field for threadsafe ?
+	return zgeobj.Forms[form_name].CurrentAction
 }
