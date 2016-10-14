@@ -271,49 +271,7 @@ func (zgeobj *ZGener) GenerateField(form_name string, field_name string) (templa
 		Data = zgeobj.DataReader.FieldsReader(field_name, zgeobj.Forms[form_name].CurrentData)
 	}
 
-	switch Type {
-	case "FORM_HIDDEN":
-		Output := "<input type='hidden' name='" + field_name +
-			"' id='" + field_name + "' "
-
-		if Data != nil {
-			OutData := fmt.Sprintf("%v", Data)
-			Output = Output + " value='" + OutData + "'"
-		}
-
-		Output = Output + "/>"
-
-		return template.HTML(Output), nil
-
-		break
-	case "FORM_STRING":
-		Length := zgeobj.Forms[form_name].Fields[field_name].Length
-		Output := "<input type='text' name='" + field_name + "' id='" +
-			field_name + "' size='" + strconv.FormatUint(uint64(Length), 10) + "'"
-		if Data != nil {
-			OutData := fmt.Sprintf("%v", Data)
-			Output = Output + " value='" + OutData + "' />"
-		} else {
-			Output = Output + "/>"
-		}
-		return template.HTML(Output), nil
-		break
-	case "FORM_TEXT":
-		Output := "<textarea name='" + field_name + "' id='" +
-			field_name + "'/>"
-		if Data != nil {
-			OutData := fmt.Sprintf("%v", Data)
-			Output = Output + OutData
-		}
-
-		Output = Output + "</textarea>"
-
-		return template.HTML(Output), nil
-		break
-	}
-
-	//execution will be panic if non nil return value sent
-	return "", errors.New("<< ZGener ERROR : Invalid Field Type !!!>>") //TODO : error handle in template ???
+	return zgeobj.generateField(form_name, field_name, Type, Data)
 }
 
 func (zgeobj *ZGener) GenerateButton(form_name string, button_name string) (template.HTML, error) {
@@ -439,4 +397,60 @@ func (zgeobj *ZGener) ActionCaption(form_name string) (string, error) {
 func (zgeobj *ZGener) GetCurrentAction(form_name string) string {
 	//TODO : lock field for threadsafe ?
 	return zgeobj.Forms[form_name].CurrentAction
+}
+
+func (zgeobj *ZGener) generateField(form_name string, field_name string,
+	Type string, Data interface{}) (template.HTML, error) {
+
+	switch Type {
+	case "FORM_HIDDEN":
+		Output := "<input type='hidden' name='" + field_name +
+			"' id='" + field_name + "' "
+
+		if Data != nil {
+			OutData := fmt.Sprintf("%v", Data)
+			Output = Output + " value='" + OutData + "'"
+		}
+
+		Output = Output + "/>"
+
+		return template.HTML(Output), nil
+
+		break
+	case "FORM_STRING":
+		Length := zgeobj.Forms[form_name].Fields[field_name].Length
+		Output := "<input type='text' name='" + field_name + "' id='" +
+			field_name + "' size='" + strconv.FormatUint(uint64(Length), 10) + "'"
+		if Data != nil {
+			OutData := fmt.Sprintf("%v", Data)
+			Output = Output + " value='" + OutData + "' />"
+		} else {
+			Output = Output + "/>"
+		}
+		return template.HTML(Output), nil
+		break
+	case "FORM_TEXT":
+		Output := "<textarea name='" + field_name + "' id='" +
+			field_name + "'/>"
+		if Data != nil {
+			OutData := fmt.Sprintf("%v", Data)
+			Output = Output + OutData
+		}
+
+		Output = Output + "</textarea>"
+
+		return template.HTML(Output), nil
+		break
+	}
+
+	//execution will be panic if non nil return value sent
+	return "", errors.New("<< ZGener ERROR : Invalid Field Type !!!>>") //TODO : error handle in template ???
+}
+
+func (zgeobj *ZGener) GenerateFieldSetValue(form_name string, field_name string,
+	value interface{}) (template.HTML, error) {
+
+	Type := zgeobj.Forms[form_name].Fields[field_name].Type
+
+	return zgeobj.generateField(form_name, field_name, Type, value)
 }
