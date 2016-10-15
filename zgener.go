@@ -91,11 +91,13 @@ type (
 	}
 
 	zGenAction struct {
-		InsertCaption string `json:"insert-caption"`
-		InsertPath    string `json:"insert-path"`
+		InsertCaption     string `json:"insert-caption"`
+		InsertPath        string `json:"insert-path"`
+		InsertPathDynamic string `json:"insert-path-dynamic"`
 
-		UpdateCaption string `json:"update-caption"`
-		UpdatePath    string `json:"update-path"`
+		UpdateCaption     string `json:"update-caption"`
+		UpdatePath        string `json:"update-path"`
+		UpdatePathDynamic string `json:"update-path-dynamic"`
 	}
 
 	zGenButton struct {
@@ -453,4 +455,31 @@ func (zgeobj *ZGener) GenerateFieldSetValue(form_name string, field_name string,
 	Type := zgeobj.Forms[form_name].Fields[field_name].Type
 
 	return zgeobj.generateField(form_name, field_name, Type, value)
+}
+
+func (zgeobj *ZGener) setActionPath(update_path *string, update_path_dyn string,
+	old_new ...string) error {
+	// Create replacer with pairs as arguments.
+	r := strings.NewReplacer(old_new...)
+
+	// Replace all pairs.
+	*update_path = r.Replace(update_path_dyn)
+
+	return nil
+}
+
+func (zgeobj *ZGener) SetInsertPath(form_name string, old_new ...string) error {
+
+	InsertPath := &zgeobj.Forms[form_name].Actions.InsertPath
+	InsertPathDyn := zgeobj.Forms[form_name].Actions.InsertPathDynamic
+
+	return zgeobj.setActionPath(InsertPath, InsertPathDyn, old_new...)
+}
+
+func (zgeobj *ZGener) SetUpdatePath(form_name string, old_new ...string) error {
+
+	UpdatePath := &zgeobj.Forms[form_name].Actions.UpdatePath
+	UpdatePathDyn := zgeobj.Forms[form_name].Actions.UpdatePathDynamic
+
+	return zgeobj.setActionPath(UpdatePath, UpdatePathDyn, old_new...)
 }
