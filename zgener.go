@@ -483,3 +483,26 @@ func (zgeobj *ZGener) SetUpdatePath(form_name string, old_new ...string) error {
 
 	return zgeobj.setActionPath(UpdatePath, UpdatePathDyn, old_new...)
 }
+
+/*
+NOTE : global (string type) must identical letter with defined template in file,
+	i.e. "{{define "header"}}...{{end}}" so global must be pass "header" not
+	"Header" neither "HEADER"
+*/
+func (zgeobj *ZGener) LoadTemplateGlobal(form_name string, global string,
+	file string) error {
+
+	//create new template obj (e.g. footer, header, etc)
+	tmpl := template.New(global)
+	//parsefiles for new template
+	tmpl, _ = tmpl.ParseFiles(file)
+	if zgeobj.Templates[form_name] == nil {
+		return errors.New("form_name not found !!!")
+	}
+	//don't replace (assigment) content in Templates[form_name] but add new one
+	//with ParseTree function
+	zgeobj.Templates[form_name].AddParseTree(global, tmpl.Tree)
+
+	//fmt.Println(string(dat))
+	return nil
+}
