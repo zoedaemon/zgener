@@ -315,14 +315,17 @@ func (zgeobj *ZGener) GenerateButton(form_name string, button_name string) (temp
 
 	Type := zgeobj.Forms[form_name].Buttons[button_name].Type
 	Caption := zgeobj.Forms[form_name].Buttons[button_name].Caption
+	Action := zgeobj.Forms[form_name].Buttons[button_name].Action
 	switch Type {
 	case "FORM_SUBMIT":
 		return template.HTML("<input type='submit' value='" + Caption +
-			"'name='" + real_button_name + "' id='" + real_button_name + "'  />"), nil
+			"'name='" + real_button_name + "' id='" + real_button_name + "'  " +
+			Action + "  />"), nil
 		break
 	case "FORM_BUTTON":
 		return template.HTML("<input type='button' value='" + Caption +
-			"'name='" + real_button_name + "' id='" + real_button_name + "'  />"), nil
+			"'name='" + real_button_name + "' id='" + real_button_name + "' " +
+			Action + "  />"), nil
 		break
 	}
 	//execution will be panic if non nil return value sent
@@ -489,7 +492,7 @@ NOTE : global (string type) must identical letter with defined template in file,
 	i.e. "{{define "header"}}...{{end}}" so global must be pass "header" not
 	"Header" neither "HEADER"
 */
-func (zgeobj *ZGener) LoadTemplateGlobal(form_name string, global string,
+func (zgeobj *ZGener) AppendTemplate(form_name string, global string,
 	file string) error {
 
 	//create new template obj (e.g. footer, header, etc)
@@ -504,5 +507,23 @@ func (zgeobj *ZGener) LoadTemplateGlobal(form_name string, global string,
 	zgeobj.Templates[form_name].AddParseTree(global, tmpl.Tree)
 
 	//fmt.Println(string(dat))
+	return nil
+}
+
+/*
+NOTE : global (string type) must identical letter with defined template in file,
+	i.e. "{{define "header"}}...{{end}}" so global must be pass "header" not
+	"Header" neither "HEADER"
+*/
+func (zgeobj *ZGener) LoadTemplateGlobal(global string,
+	file string) error {
+
+	for FormName, _ := range zgeobj.Templates {
+		err := zgeobj.AppendTemplate(FormName, global, file)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
