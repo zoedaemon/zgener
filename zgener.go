@@ -48,6 +48,7 @@ var (
 //		zgener.DataReader
 type ZGenerDataReader interface {
 	FieldsReader(field_name string, data interface{}) interface{}
+	GetPostData(field_name string) interface{}
 }
 
 /*zgof's fields */
@@ -81,9 +82,13 @@ type zGenForm struct {
 
 type (
 	zGenField struct {
-		Type    string `json:"type"`
-		Length  uint16 `json:"length"`
-		Caption string `json:"caption"`
+		Type          string `json:"type"`
+		Length        uint16 `json:"length"`
+		Caption       string `json:"caption"`
+		NoShowInTable bool   `json:"no-show-in-table"`
+		NoInsert      bool   `json:"no-insert"`
+		NoUpdate      bool   `json:"no-update"`
+
 		/*
 			FUTURE
 		*/
