@@ -564,3 +564,37 @@ func (zgeobj *ZGener) ModelGenerateInsert(form_name string, table_name string) (
 
 	return query, nil
 }
+
+func (zgeobj *ZGener) ModelGenerateUpdate(form_name string, table_name string,
+	default_id string) (string, error) {
+
+	i := 0
+	fields_and_values := ""
+
+	for key, value := range zgeobj.Forms[form_name].Fields {
+		//skip if no update
+		if value.NoUpdate {
+			continue
+		}
+		fmt.Println("Key=" + key)
+		if i > 0 {
+			fields_and_values += "," + key + "='" +
+				template.HTMLEscapeString(zgeobj.DataReader.GetPostData(key).(string)) +
+				"'"
+		} else {
+			fields_and_values += key + "='" +
+				template.HTMLEscapeString(zgeobj.DataReader.GetPostData(key).(string)) +
+				"'"
+			i++
+		}
+	}
+
+	//test query secara manual
+	query := "UPDATE %s SET %s WHERE %s='%s'"
+
+	//generate query
+	query = fmt.Sprintf(query, table_name, fields_and_values, default_id,
+		template.HTMLEscapeString(zgeobj.DataReader.GetPostData(default_id).(string)))
+
+	return query, nil
+}
