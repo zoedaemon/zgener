@@ -532,3 +532,35 @@ func (zgeobj *ZGener) LoadTemplateGlobal(global string,
 
 	return nil
 }
+
+func (zgeobj *ZGener) ModelGenerateInsert(form_name string, table_name string) (string, error) {
+
+	i := 0
+	fields := ""
+	values := ""
+
+	for key, value := range zgeobj.Forms[form_name].Fields {
+		//skip if no insert
+		if value.NoInsert {
+			continue
+		}
+
+		if i > 0 {
+			fields = fields + ", " + key
+			values = values + ", '" + template.HTMLEscapeString(zgeobj.DataReader.GetPostData(key).(string)) +
+				"'"
+		} else {
+			fields = key
+			values = "'" + template.HTMLEscapeString(zgeobj.DataReader.GetPostData(key).(string)) +
+				"'"
+			i++
+		}
+	}
+
+	//test query secara manual
+	query := "INSERT INTO %s(%s) VALUES(%s)"
+
+	query = fmt.Sprintf(query, table_name, fields, values)
+
+	return query, nil
+}
