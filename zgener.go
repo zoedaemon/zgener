@@ -88,6 +88,7 @@ type (
 		NoShowInTable bool   `json:"no-show-in-table"`
 		NoInsert      bool   `json:"no-insert"`
 		NoUpdate      bool   `json:"no-update"`
+		AllowNull     bool   `json:"allow-null"`
 
 		/*
 			FUTURE
@@ -544,14 +545,18 @@ func (zgeobj *ZGener) ModelGenerateInsert(form_name string, table_name string) (
 		if value.NoInsert {
 			continue
 		}
-
+		PostData := template.HTMLEscapeString(zgeobj.DataReader.GetPostData(key).(string))
+		if PostData == "" {
+			if !value.AllowNull {
+				return "", errors.New("\"" + key + "\" must not be empty")
+			}
+		}
 		if i > 0 {
 			fields = fields + ", " + key
-			values = values + ", '" + template.HTMLEscapeString(zgeobj.DataReader.GetPostData(key).(string)) +
-				"'"
+			values = values + ", '" + PostData + "'"
 		} else {
 			fields = key
-			values = "'" + template.HTMLEscapeString(zgeobj.DataReader.GetPostData(key).(string)) +
+			values = "'" + PostData +
 				"'"
 			i++
 		}
