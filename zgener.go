@@ -89,7 +89,7 @@ type (
 		NoInsert      bool   `json:"no-insert"`
 		NoUpdate      bool   `json:"no-update"`
 		AllowNull     bool   `json:"allow-null"`
-
+		Attributes    string `json:"attributes"`
 		/*
 			FUTURE
 		*/
@@ -325,12 +325,12 @@ func (zgeobj *ZGener) GenerateButton(form_name string, button_name string) (temp
 	switch Type {
 	case "FORM_SUBMIT":
 		return template.HTML("<input type='submit' value='" + Caption +
-			"'name='" + real_button_name + "' id='" + real_button_name + "'  " +
+			"' name='" + real_button_name + "' id='" + real_button_name + "'  " +
 			Action + "  />"), nil
 		break
 	case "FORM_BUTTON":
 		return template.HTML("<input type='button' value='" + Caption +
-			"'name='" + real_button_name + "' id='" + real_button_name + "' " +
+			"' name='" + real_button_name + "' id='" + real_button_name + "' " +
 			Action + "  />"), nil
 		break
 	}
@@ -434,15 +434,20 @@ func (zgeobj *ZGener) generateField(form_name string, field_name string,
 			field_name + "' size='" + strconv.FormatUint(uint64(Length), 10) + "'"
 		if Data != nil {
 			OutData := fmt.Sprintf("%v", Data)
-			Output = Output + " value='" + OutData + "' />"
-		} else {
-			Output = Output + "/>"
+			Output = Output + " value='" + OutData
 		}
+		//all attributes
+		Output = Output + " " + zgeobj.Forms[form_name].Fields[field_name].Attributes
+
+		Output = Output + "/>"
+		//send to html format
 		return template.HTML(Output), nil
 		break
 	case "FORM_TEXT":
 		Output := "<textarea name='" + field_name + "' id='" +
-			field_name + "'/>"
+			field_name + "' " +
+			zgeobj.Forms[form_name].Fields[field_name].Attributes +
+			"/>"
 		if Data != nil {
 			OutData := fmt.Sprintf("%v", Data)
 			Output = Output + OutData
